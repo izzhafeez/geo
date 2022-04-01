@@ -2,13 +2,11 @@ from __future__ import annotations
 from ..geometry.pt import Pt
 from functools import cached_property
 from typing import List, Tuple
-import numpy as np
 
 class XY:
     X, Y = "x", "y"
 
 class KDNode:
-
     point: Pt
     level: str
     left: KDNode
@@ -38,13 +36,12 @@ class KDNode:
                 self.right = KDNode(point, self.next_level)
                 
     def nearest(self, point: Pt) -> Tuple[Pt, float]:
-
         next_branch: KDNode
         other_branch: KDNode
         temp: Pt
 
         next_branch, other_branch = self._get_next_other_branch(point)
-        temp = self._get_temp_point(next_branch, point)
+        temp = KDNode._get_temp_point(next_branch, point)
         return self._backtrack(point, temp, other_branch)
 
     def _get_next_other_branch(self, point: Pt) -> Tuple[KDNode, KDNode]:
@@ -60,7 +57,6 @@ class KDNode:
             return Pt(float("inf"), float("inf"))
 
     def _backtrack(self, point: Pt, temp: Pt, other_branch: KDNode) -> Tuple[Pt, float]:
-
         best: Pt
         best_d: float
         s_d: float
@@ -74,7 +70,6 @@ class KDNode:
         return (best, best_d)
 
 class KDTree:
-
     root: KDNode
     weight: int
     min_x: float

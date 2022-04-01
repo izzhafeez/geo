@@ -12,21 +12,19 @@ class Location(GeoPt):
     name: str
     lat: Optional[float] = None
     lon: Optional[float] = None
+    shape: Optional[Shape] = None
 
-    def __init__(self, name: str, lat: float=None, lon: float=None):
+    def __init__(self, name: str, lat: float=None, lon: float=None, shape: Shape=None):
         self.name = name
+        self.shape = shape
         lat, lon = self._get_coords(lat, lon)
         super().__init__(lat, lon)
-
-    @staticmethod
-    def of(name: str, lat: float=None, lon: float=None, shape: Shape=None):
-        if shape != None:
-            return ShapedLocation(name, shape)
-        return Location(name, lat, lon)
     
     def _get_coords(self, lat: float, lon: float) -> None:
         if check_all_float(lat, lon):
             return lat, lon
+        if self.shape != None:
+            return self.shape.points.center.coords_as_tuple_yx()
         try:
             return self._get_coords_from_api(self.name)
         except IndexError:
@@ -47,14 +45,8 @@ class Location(GeoPt):
         self._elevation = ElevationMap.get_elevation(self.lat, self.lon)
         return self._elevation
 
-class ShapedLocation(Location):
-    name: str
-    shape: Shape
-
-    def __init__(self, name: str, shape: Shape):
-        super().__init__(name, *shape.points.center.coords_as_tuple_yx())
-        self.shape = Shape
-
     def get_distance(self, point: GeoPt) -> float:
-        return self.shape.get_nearest(point)[1]
+        if self.shape != None:
+            return self.shape.get_nearest(point)[1]
+        return super().get_distance(point)
     
