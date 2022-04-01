@@ -25,15 +25,19 @@ class KDNode:
         else:
             return XY.X
         
-    def add_node(self, point: Pt) -> None:
+    def add(self, point: Pt) -> None:
         if getattr(point, self.level) <= getattr(self.point, self.level):
             if self.left == None:
                 self.left = KDNode(point, self.next_level)
+                return self.left
             else:
-                self.left.add_node(point)
+                self.left.add(point)
         else:
             if self.right == None:
                 self.right = KDNode(point, self.next_level)
+                return self.right
+            else:
+                self.right.add(point)
                 
     def nearest(self, point: Pt) -> Tuple[Pt, float]:
         next_branch: KDNode
@@ -84,8 +88,14 @@ class KDTree:
         self.max_x = float("-inf")
         self.min_y = float("inf")
         self.max_y = float("-inf")
+
+    def __str__(self) -> str:
+        return str(self.in_order())
+
+    def __repr__(self) -> str:
+        return f"<KDTree: x({self.min_x}, {self.max_x}), y({self.min_y}, {self.max_y})>"
     
-    def add_node(self, *points: List[Pt]) -> None:
+    def add_all(self, *points: Pt) -> None:
         if self.root == None:
             self.root = KDNode(points[0], XY.X)
             points = points[1:]
@@ -93,8 +103,17 @@ class KDTree:
             
         for point in points:
             self._remap_min_max(point)
-            self.root.add_node(point)
+            self.root.add(point)
             self.weight += 1
+    
+    def add(self, point: Pt) -> KDNode:
+        if self.root == None:
+            self.root = KDNode(point, XY.X)
+            self.weight += 1
+            return self.root
+        self._remap_min_max(point)
+        self.weight += 1
+        return self.root.add(point)
 
     def _remap_min_max(self, point: Pt) -> None:
         self.min_x = min(self.min_x, point.x)
@@ -102,7 +121,7 @@ class KDTree:
         self.max_x = max(self.max_x, point.x)
         self.max_y = max(self.max_y, point.y)
         
-    def nearest(self, point: Pt) -> Pt:
+    def nearest(self, point: Pt) -> Tuple[Pt, float]:
         if self.root == None:
             return None
         return self.root.nearest(point)
@@ -110,3 +129,27 @@ class KDTree:
     @property
     def center(self) -> Pt:
         return Pt((self.max_x+self.min_x)/2, (self.max_y+self.min_y)/2)
+
+    def in_order(self) -> List[Pt]:
+        L: List[Pt] = []
+        def in_order_helper(node: KDNode):
+            if not node:
+                return None
+            in_order_helper(node.left)
+            L.append(node.point)
+            in_order_helper(node.right)
+        in_order_helper(self.root)
+        return L
+
+    def pre_order(self) -> List[Pt]:
+        L: List[Pt] = []
+        def pre_order_helper(node: KDNode):
+            if not node:
+                return None
+            else:
+                L.append(node.point)
+                pre_order_helper(node.left)
+                pre_order_helper(node.right)
+        pre_order_helper(self.root)
+        return L
+           

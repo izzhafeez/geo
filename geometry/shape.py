@@ -16,7 +16,7 @@ class Shape(geometry.Polygon):
     def __init__(self, points: list):
         super().__init__(points)
         self.points = KDTree()
-        self.points.add_node(*points)
+        self.points.add_all(*points)
         
     def get_nearest(self, point: Pt) -> Tuple[Pt, float]:
         return self.points.nearest(point)

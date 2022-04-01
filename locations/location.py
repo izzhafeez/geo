@@ -6,9 +6,13 @@ from functools import cached_property
 import numpy as np
 import json
 import requests
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict, List
+import pandas as pd
+from gsheets import Sheets
+from abc import ABC, abstractmethod
+from ..structures.kdtree import KDTree, KDNode
 
-class Location(GeoPt):
+class Location(GeoPt, ABC):
     name: str
     lat: Optional[float] = None
     lon: Optional[float] = None
@@ -18,7 +22,15 @@ class Location(GeoPt):
         self.name = name
         self.shape = shape
         lat, lon = self._get_coords(lat, lon)
-        super().__init__(lat, lon)
+        super().__init__(lat=lat, lon=lon)
+
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
+    @abstractmethod
+    def __repr__(self) -> str:
+        pass
     
     def _get_coords(self, lat: float, lon: float) -> None:
         if check_all_float(lat, lon):
@@ -38,15 +50,68 @@ class Location(GeoPt):
                 "&returnGeom=Y&getAddrDetails=Y")
         coords = json.loads(requests.get(search_url).text)["results"][0]
 
-        return float(coords["LONGITUDE"]), float(coords["LATITUDE"])
+        return float(coords["LATITUDE"]), float(coords["LONGITUDE"])
     
     @cached_property
     def elevation(self) -> float:
-        self._elevation = ElevationMap.get_elevation(self.lat, self.lon)
+        self._elevation = ElevationMap.get_elevation(lat=self.lat, lon=self.lon)
         return self._elevation
 
     def get_distance(self, point: GeoPt) -> float:
         if self.shape != None:
             return self.shape.get_nearest(point)[1]
         return super().get_distance(point)
-    
+
+    def _try_setter(self, fields: List[str], items: Dict):
+        for field in fields:
+            if field in items and not pd.isna(items[field]):
+                setattr(self, field, items[field])
+            else:
+                setattr(self, field, None)
+
+class Locations(ABC):
+    locations_tree: KDTree
+    locations: Dict[str, Location]
+
+    _SHEET_ID = "1M9Ujc54yZZPlxOX3yxWuqcuJOxzIrDYz4TAFx8ifB8c"
+
+    def __init__(self, *locations: Location):
+        self.locations_tree = KDTree()
+        self.locations = {}
+        for location in locations:
+            self.locations_tree.add(location)
+            self.locations[location.name] = location
+
+    def __getitem__(self, search_term="") -> Location:
+        if search_term in self.locations:
+            return self.locations[search_term]
+        search_results = dict(filter(
+            lambda location: search_term in location[0],
+            self.locations.items()))
+        if len(search_results) == 1:
+            return list(search_results.values())[0]
+        if len(search_results) == 0:
+            print(f"{search_term} not found. Please try again.")
+            return None
+        print(f"{search_term} produced multiple locations "
+            f"({', '.join([result.name for result in search_results])}). "
+            "Please try again.")
+
+    @staticmethod
+    @abstractmethod
+    def get(blanks):
+        pass
+
+    @staticmethod
+    def get_sheet(name: str) -> pd.DataFrame:
+	    sheets = Sheets.from_files('client_secrets.json','~/storage.json')[Locations._SHEET_ID]
+	    return sheets.find(name).to_frame()
+
+    def get_with_regex(self, search_term="") -> Dict[str, Location]:
+        search_results = dict(filter(
+            lambda location: search_term in location[0],
+            self.locations.items()))
+        return search_results
+
+    def get_nearest(self, point: GeoPt) -> Tuple[GeoPt, float]:
+        return self.locations_tree.nearest(point)

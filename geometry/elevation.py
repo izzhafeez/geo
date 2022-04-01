@@ -214,7 +214,7 @@ class ElevationMap():
     @staticmethod
     def _get_lower_neighbour(result_e: Elevation, r: float, g: float, b: float) -> float:
         # Gets the lower neighbour where possible
-        if result_e == None:
+        if result_e == None or result_e.lower == None:
             return float("inf")
         else:
             return result_e.lower.get_diff(r, g, b)
@@ -222,7 +222,7 @@ class ElevationMap():
     @staticmethod
     def _get_higher_neighbour(result_e: Elevation, r: float, g: float, b: float) -> float:
         # Gets the higher neighbour where possible
-        if result_e == None:
+        if result_e == None or result_e.higher == None:
             return float("inf")
         else:
             return result_e.higher.get_diff(r, g, b)
