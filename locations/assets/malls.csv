@@ -1,0 +1,210 @@
+Name,Latitude,Longitude,Floors,Stores,Opening year,Area,Owner
+100 AM,1.2749,103.8435,5,56,2012,121000,
+111 Somerset,1.3001,103.8351,,,,60000,
+313@Somerset,1.3009,103.8384,9,147,2009,288277,Lendlease
+321 Clementi,1.3120,103.7650,7,24,2011,191000,Eng Wah
+888 Plaza,1.4381,103.7933,,,,,HDB
+Admiralty Place,1.4406,103.7988,,,,,HDB
+Alexandra Central,1.2873,103.8030,,,,,
+Alexandra Retail Centre,1.2735,103.8012,3,68,1985,89652,Mapletree
+AMK Hub,1.3696,103.8485,6,215,2007,320000,M Malls
+Anchorpoint,1.2888,103.8051,2,53,1997,70988,
+Aperia,1.3105,103.8642,3,52,2014,105733,CapitaLand
+Balestier Hill Shopping Centre,1.3258,103.8406,,,,,
+Beauty World Centre,1.3423,103.7742,,,,,
+Beauty World Plaza,1.3420,103.7741,,,,,
+Bedok Mall,1.3244,103.9299,4,194,2013,220000,CapitaLand
+Bedok Point,1.3249,103.9324,5,27,2010,82713,
+Bedok Town Center,1.3245,103.9294,,,,235000,
+Big Box,1.3318,103.7426,,,,,
+Boon Lay Shopping Centre,1.3468,103.7107,,,,,HDB
+Broadway Plaza,1.3719,103.8460,,,,,
+Buangkok Square,1.3843,103.8816,3,43,2006,53000,HDB
+Bugis Cube,1.2982,103.8557,,119,,,
+Bugis Junction,1.2992,103.8553,5,248,1995,397320,CapitaLand
+Bugis Street,1.3006,103.8549,3,242,1995,191060,CapitaLand
+Bugis+,1.2996,103.8544,6,82,2009,202680,CapitaLand
+Bukit Panjang Plaza,1.3800,103.7642,4,126,1998,152306,CapitaLand
+Bukit Timah Plaza,1.3386,103.7786,4,,,,
+Bukit Timah Shopping Centre,1.3433,103.7759,7,,1981,,
+Canberra Plaza,1.4433,103.8305,4,45,2020,88000,HDB
+Capitol Singapore,1.2930,103.8512,4,67,2015,133822,
+Cathay Cineleisure Orchard,1.3015,103.8364,8,26,1997,169897,
+Causeway Point,1.4361,103.7858,6,218,1998,416301,Frasers
+Century Square,1.3524,103.9438,6,131,1995,205000,Frasers
+Changi Airport,1.3458,103.9829,,,,28000,
+Changi Airport T1,1.3618,103.9881,2,69,,,
+"Changi Airport T1,T2,T3,T4",0.0000,0.0000,,274,1981,,
+Changi Airport T3,1.3563,103.9865,5,115,2008,215278,
+Changi Airport T4,1.3384,103.9815,2,81,2017,161458,
+Changi City Point,1.3343,103.9627,3,129,2011,205007,Frasers
+Chinatown Point,1.2852,103.8447,6,156,1990,207726,
+City Gate Mall,1.3023,103.8624,3,69,2018,76289,
+City Plaza,1.3148,103.8934,,,,,
+City Square Mall,1.3117,103.8564,11,186,2009,450000,
+CityLink Mall,1.2913,103.8552,2,70,2000,67758,
+Clarke Quay Central,1.2890,103.8466,6,86,2007,201546,Far East Malls
+Clementi Mall,1.3147,103.7643,6,156,2011,192460,
+Compass One,1.3922,103.8953,5,203,2002,272881,
+Djitsun Mall,1.3261,103.9296,,,,,
+Djitsun Mall Bedok,1.3263,103.9295,4,,,48000,
+DUO,1.2995,103.8584,,,,,
+East Village,1.3318,103.9462,,,,,
+Eastpoint Mall,1.3427,103.9531,7,131,1996,207806,
+Elias Mall,1.3786,103.9420,2,47,1995,70000,HDB
+FairPrice Hub,1.3269,103.6788,3,28,2015,130000,
+Fajar Shopping Centre,1.3840,103.7706,2,34,1996,49513,HDB
+Far East Plaza,1.3069,103.8331,5,549,1982,292160,
+Funan,1.2913,103.8501,6,199,2019,324000,CapitaLand
+Galaxis,1.2999,103.7881,2,,,44196,CapitaLand
+Gek Poh Shopping Centre,1.3487,103.6977,,,,,HDB
+Golden Mile Complex,1.3091,103.8575,6,411,1973,127961,
+Grandstand Car Mall,1.3368,103.7906,1,150,2012,450000,
+Grantral Mall,1.3142,103.7651,,,,,
+Great World City,1.2936,103.8319,6,303,1997,420000,
+Greenridge Shopping Centre,1.3854,103.7662,,,,,HDB
+Greenwich V,1.3874,103.8694,2,21,2014,43724,Far East Malls
+HarbourFront Centre,1.2642,103.8204,3,152,1977,100000,
+HDB Hub,1.3320,103.8498,,,,186000,HDB
+Heartland Mall,1.3595,103.8852,3,104,1984,86000,
+Hillion Mall,1.3785,103.7633,4,131,2017,174730,
+HillV2,1.3634,103.7643,2,26,2014,53149,Far East Malls
+Holland Road Shopping Centre,1.3103,103.7954,4,106,1985,85820,
+Hougang 1,1.3761,103.8792,3,37,1999,85915,Far East Malls
+Hougang Green Shopping Mall,1.3793,103.8878,,,,,
+Hougang Mall,1.3726,103.8935,6,133,1997,166361,Frasers
+I12 Katong,1.3050,103.9051,6,67,2011,207160,
+Icon Village,1.2753,103.8444,1,34,2007,29838,Far East Malls
+IKEA Alexandra,1.2880,103.8060,,1,1995,400000,
+IKEA Tampines,1.3742,103.9323,4,1,2006,753473,
+iMall,1.3031,103.9065,,,,86500,
+IMM,1.3350,103.7471,5,231,1991,953002,CapitaLand
+ION Orchard,1.3044,103.8317,9,297,2009,627971,CapitaLand
+JCube,1.3333,103.7400,5,114,2012,210036,CapitaLand
+Jem,1.3332,103.7434,7,254,2013,892000,
+Jewel Changi Airport,1.3644,103.9915,7,241,2019,576945,CapitaLand
+Jubilee Square,1.3717,103.8476,4,26,1996,30000,
+Junction 10,1.3803,103.7601,2,40,1998,90879,Far East Malls
+Junction 8 Shopping Centre,1.3506,103.8488,6,166,1993,252383,CapitaLand
+Junction 9,1.4331,103.8416,2,131,2013,95351,
+Jurong Point Shopping Mall,1.3400,103.7064,9,354,1995,750000,
+Kallang Wave Mall,1.3032,103.8729,3,74,2014,441320,
+Katong Shopping Centre,1.3039,103.8989,7,145,1973,90000,
+Katong Square,1.3051,103.9043,,,,,
+Katong V,1.3036,103.9030,3,31,2008,47184,Far East Malls
+Keat Hong Shopping Centre,1.3774,103.7444,,,,,HDB
+KINEX,1.3147,103.8948,4,88,2019,202479,
+KKH The Retail Mall,0.0000,0.0000,,,,,
+Knightsbridge,1.3030,103.8363,,,,,
+Le Quest,1.3558,103.7412,1,38,2020,45000,
+Leisure Park Kallang,1.3022,103.8764,5,60,1982,188000,
+Liang Court,1.2914,103.8447,7,53,1984,254631,
+Liat Towers,1.3053,103.8306,21,,1979,"400 to 5,500 square feet (37 to 511 m2)[2]",
+Limbang Shopping Centre,1.3922,103.7436,,,,,HDB
+Lot One,1.3851,103.7427,6,148,1996,219836,CapitaLand
+Loyang Point,1.3669,103.9644,2,77,1995,75000,HDB
+Lucky Plaza,1.3045,103.8339,7,513,1977,175200,
+Mandarin Gallery,1.3021,103.8364,4,100,2010,126282,
+Marina Bay Financial Centre Tower 3,1.2791,103.8545,,,,,
+Marina Bay Link Mall,1.2800,103.8540,5,55,2010,93800,
+Marina Bay Sands Shoppes,1.2847,103.8610,5,216,2010,800000,
+Marina One,1.2771,103.8540,4,41,2018,140000,
+Marina Square,1.2911,103.8575,5,190,1985,780000,
+Marsiling Mall,1.4335,103.7797,,,,,
+Midpoint Orchard,1.3018,103.8387,,,,,
+Millenia Walk,1.2928,103.8598,2,188,1995,322917,
+Mustafa Centre,1.3097,103.8558,6,1,1995,400000,
+myVillage @ Serangoon Garden,0.0000,0.0000,3,37,,,
+Nex,1.3696,103.8485,7,334,2010,616000,
+Ngee Ann City,1.3026,103.8346,7,171,1993,255021,
+Northpoint City,1.4282,103.8361,6,412,1992,500000,Frasers
+Northshore Plaza,1.4168,103.9018,3,38,2021,62200,
+Velocity @ Novena Square,1.3200,103.8439,3,52,2000,170672,
+Downtown East,1.3776,103.9546,5,134,2000,130000,
+Oasis Terraces,1.4028,103.9132,6,45,2018,193750,HDB
+OD Mall,0.0000,0.0000,,,,,
+One Fullerton,1.2861,103.8518,2,14,1997,60314,
+One Holland Village,1.3111,103.7940,,22,2022,81500,
+One Raffles Place,1.2842,103.8511,6,84,1985,100000,
+One-north,1.3033,103.7891,,,,,
+Orchard Central,1.3006,103.8399,13,78,2009,258912,Far East Malls
+Orchard Gateway,1.2996,103.8544,6,114,2014,170000,
+Orchard Plaza,1.3013,103.8412,,,,,
+Orchard Shopping Centre,1.3015,103.8379,,,,,
+Our Tampines Hub,1.3529,103.9410,7,122,2017,300000,
+Palais Renaissance,1.3067,103.8296,,,,,
+Parkway Parade,1.3019,103.9047,7,251,1983,576000,
+Paya Lebar Quarter,1.3175,103.8940,7,191,2019,340000,
+Paya Lebar Square,1.3188,103.8926,3,106,2011,95475,
+Peninsula Plaza,1.2923,103.8508,,,1979,409028,
+People's Park Centre,1.2858,103.8439,,,1973,,
+People's Park Complex,1.2841,103.8422,4,214,,"845,000 square feet (78,500 m2)",
+Pioneer Mall,1.3421,103.6974,4,30,2004,,HDB
+Plaza Singapura,1.3007,103.8449,9,303,1974,619023,CapitaLand
+PoMo,0.0000,0.0000,,,,,
+Punggol Plaza,1.3942,103.9127,6,56,2004,370000,HDB
+Queensway Shopping Centre,1.2875,103.8036,4,138,1976,66320,
+Raffles City Singapore,1.2936,103.8531,5,239,1986,426830,CapitaLand
+Rail Mall,1.3581,103.7679,1,28,1947,50000,
+Resorts World Sentosa,1.2569,103.8202,3,45,2010,30000,
+Rivervale Mall,1.3920,103.9047,3,69,2000,81160,
+Rivervale Plaza,1.3854,103.9018,,,,,HDB
+Rochester Mall,1.3054,103.7884,,,,,
+Roxy Square,1.3043,103.9041,,51,2000,36425,
+Scotts Square,1.3058,103.8331,,,,,
+Seletar Mall,1.3917,103.8760,6,136,2014,188000,
+Sembawang Shopping Centre,1.4419,103.8251,4,72,1986,143631,
+Serangoon Plaza,1.3108,103.8551,,,,,
+Shaw Centre,1.3063,103.8318,6,49,1972,110000,
+Shaw House and Centre,1.3058,103.8315,22,12,1993,,
+Sim Lim Square,1.3031,103.8531,7,442,1987,236881,
+Singapore Shopping Centre,1.2981,103.8441,,,,,
+Singpost Centre,1.3190,103.8944,4,117,2017,175000,CapitaLand
+"South Beach, Singapore",1.2950,103.8561,,,,32000,
+Square 2,1.3208,103.8441,5,141,2007,138396,Far East Malls
+Sun Plaza,1.4482,103.8195,6,102,1999,158000,
+Sunshine Place,1.3779,103.7390,,,1999,,HDB
+Sunshine Plaza,1.3003,103.8510,,,2001,53633,
+Suntec City,1.2950,103.8583,5,351,1997,888000,
+Taman Jurong Shopping Centre,1.3349,103.7206,1,61,1995,86111,HDB
+Tampines 1,1.3542,103.9450,6,167,2009,260000,Frasers
+Tampines Mall,1.3525,103.9447,6,179,1995,377437,CapitaLand
+Tampines Mart,1.3545,103.9600,2,61,1993,40000,
+Tanglin Mall,1.3049,103.8239,4,90,,,
+Tangs,1.3050,103.8330,,,,South East Asia,
+Tanjong Pagar Centre,1.2771,103.8461,3,67,2016,100000,
+Teck Whye Shopping Centre,1.3800,103.7525,,,,,
+Tekka Centre,1.3062,103.8506,,,,,
+Tekka Place,1.3051,103.8492,3,24,2019,70000,
+The Cathay,1.2995,103.8478,,,,,https://singmalls.app/en/malls/the-cathay/directory
+The Centrepoint,1.3015,103.8396,8,121,1983,371300,
+The Flow,1.3046,103.9042,,,,,
+The Furniture Mall,1.3323,103.7481,,70,,,
+The Midtown,1.3705,103.8951,,,,,
+The Paragon,1.3038,103.8355,8,218,1998,484840,
+The Poiz,1.3313,103.8681,,,,,
+The Star Vista,1.3068,103.7884,3,102,2012,162500,
+Thomson Plaza,1.3547,103.8309,4,174,1979,239316,
+Tiong Bahru Plaza,1.2865,103.8272,5,152,1994,209000,Frasers
+United Square,1.3173,103.8437,5,114,2000,210111,
+Upper Serangoon Shopping Centre,1.3535,103.8788,,,,,
+Vista Point,1.4308,103.7939,,,,,HDB
+Viva Vista,1.2797,103.7861,2,43,2018,21054,
+VivoCity,1.2644,103.8222,5,364,2006,1076251,
+Waterway Point,1.4067,103.9020,4,216,2016,371200,Frasers
+West Coast Plaza,1.3036,103.7642,3,82,1992,151137,Far East Malls
+West Mall,1.3500,103.7491,6,112,1998,183000,
+Westgate,1.3341,103.7430,7,238,2013,411272,CapitaLand
+Wheelock Place,1.3045,103.8306,7,107,1993,153258,
+White Sands,1.3725,103.9497,7,127,1997,148000,Frasers
+Wisma Atria,1.3036,103.8330,5,107,1986,127000,
+Wisteria Mall,1.4174,103.8378,2,62,2019,83361,
+Woodlands Civic Centre,1.4351,103.7869,,,,,
+Woodlands Mart,1.4456,103.7982,,,,,HDB
+Woodlands North Plaza,1.4428,103.7908,,,,,HDB
+Woodleigh Mall,1.3387,103.8717,3,,2022,96800,
+Woods Square,1.4352,103.7838,4,33,2021,39264,Far East Malls
+Yew Tee Point,1.3972,103.7468,2,71,2006,73699,
+Yew Tee Shopping Centre,1.3970,103.7476,,,,,
+Yew Tee Square,1.3983,103.7472,,,,,HDB
+Zhongshan Mall,1.3269,103.8466,,,,,

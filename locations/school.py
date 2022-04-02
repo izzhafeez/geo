@@ -2,6 +2,7 @@ from __future__ import annotations
 from .location import Location, Locations
 from typing import Optional, Dict, List
 import pandas as pd
+from os.path import join, dirname
 
 class School(Location):
     code: Optional[int]
@@ -11,7 +12,7 @@ class School(Location):
     gender: str
 
     def __init__(self, name: str, **kwargs):
-        fields = ["lat", "lon", "shape", "code", "funding", "opening_year", "gender"]
+        fields = ["lat", "lon", "shape", "code", "funding", "level", "opening_year", "gender"]
         self._try_setter(fields, kwargs)
         super().__init__(name, lat=self.lat, lon=self.lon, shape=self.shape)
     
@@ -43,21 +44,30 @@ class Schools(Locations):
         "Funding": "funding",
         "Level": "level",
         "Opening Year": "opening_year",
-        "Gender": "gender",
+        "Type": "gender",
     }
 
     def __init__(self, *schools: School):
         super().__init__(*schools)
 
+    @property
+    def name(self) -> str:
+        return "school"
+
     @staticmethod
-    def get(blanks=False) -> Schools:
-        print("Retrieving 'Schools' from Sheets...")
-        raw_schools_df = Locations.get_sheet("Schools")
-        print("Retrieved.")
+    def get(blanks=False, offline=True) -> Schools:
+        if offline:
+            raw_schools_df = pd.read_csv(join(dirname(__file__), "assets/schools.csv"))
+        else:
+            print("Retrieving 'Schools' from Sheets...")
+            raw_schools_df = Locations.get_sheet("Schools")
+            print("Retrieved.")
+
         if blanks:
             schools_dict = raw_schools_df.to_dict("records")
         else:
             schools_dict = raw_schools_df[raw_schools_df.Latitude != 0].to_dict("records")
+        
         schools: List[School] = []
         for school_dict in schools_dict:
             name = school_dict["Name"]

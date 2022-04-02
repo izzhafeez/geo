@@ -1,3 +1,4 @@
+from __future__ import annotations
 from ..geometry.elevation import ElevationMap
 from ..geometry.pt import GeoPt
 from ..geometry.shape import Shape
@@ -10,18 +11,20 @@ from typing import Tuple, Optional, Dict, List
 import pandas as pd
 from gsheets import Sheets
 from abc import ABC, abstractmethod
-from ..structures.kdtree import KDTree, KDNode
+from ..structures.kdtree import KDTree
 
 class Location(GeoPt, ABC):
     name: str
     lat: Optional[float] = None
     lon: Optional[float] = None
     shape: Optional[Shape] = None
+    nearest: Dict[Location, float]
 
     def __init__(self, name: str, lat: float=None, lon: float=None, shape: Shape=None):
         self.name = name
         self.shape = shape
         lat, lon = self._get_coords(lat, lon)
+        self._nearest = {}
         super().__init__(lat=lat, lon=lon)
 
     @abstractmethod
@@ -69,6 +72,22 @@ class Location(GeoPt, ABC):
             else:
                 setattr(self, field, None)
 
+    def map_nearest(self, name: str, locations: Locations) -> Tuple[Location, float]:
+        self._nearest[name] = locations.get_nearest(self)
+        return self._nearest[name]
+
+    def get_nearest(self, name: str) -> Tuple[Location, float]:
+        if name not in self._nearest:
+            print(f"Nearest '{name}' not defined. Please use map_nearest.")
+            return (None, float("inf"))
+        return self._nearest[name]
+
+    def get_nearest_location(self, name: str) -> Location:
+        return self.get_nearest(name)[0]
+    
+    def get_nearest_distance(self, name: str) -> float:
+        return self.get_nearest(name)[1]
+
 class Locations(ABC):
     locations_tree: KDTree
     locations: Dict[str, Location]
@@ -96,6 +115,11 @@ class Locations(ABC):
         print(f"{search_term} produced multiple locations "
             f"({', '.join([result.name for result in search_results])}). "
             "Please try again.")
+    
+    @property
+    @abstractmethod
+    def name(self):
+        pass
 
     @staticmethod
     @abstractmethod
@@ -115,3 +139,10 @@ class Locations(ABC):
 
     def get_nearest(self, point: GeoPt) -> Tuple[GeoPt, float]:
         return self.locations_tree.nearest(point)
+
+    def map_nearest(self, locations: Locations) -> List[Tuple[str, Tuple[Location, float]]]:
+        to_return = []
+        for name, location in self.locations.items():
+            location.map_nearest(locations.name, locations)
+            to_return.append((name, location.get_nearest(locations.name)))
+        return to_return

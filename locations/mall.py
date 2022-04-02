@@ -2,6 +2,7 @@ from __future__ import annotations
 from .location import Location, Locations
 from typing import Optional, Dict, List
 import pandas as pd
+from os.path import join, dirname
 
 class Mall(Location):
     floors: Optional[int]
@@ -33,11 +34,18 @@ class Malls(Locations):
     def __init__(self, *malls: Mall):
         super().__init__(*malls)
 
+    @property
+    def name(self) -> str:
+        return "mall"
+
     @staticmethod
-    def get(blanks=False) -> Malls:
-        print("Retrieving 'Malls Raw' from Sheets...")
-        raw_malls_df = Locations.get_sheet("Malls Raw")
-        print("Retrieved.")
+    def get(blanks=False, offline=True) -> Malls:
+        if offline:
+            raw_malls_df = pd.read_csv(join(dirname(__file__), "assets/malls.csv"))
+        else:
+            print("Retrieving 'Malls Raw' from Sheets...")
+            raw_malls_df = Locations.get_sheet("Malls Raw")
+            print("Retrieved.")
         if blanks:
             malls_dict = raw_malls_df.set_index("Name").to_dict("index")
         else:
