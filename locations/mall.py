@@ -1,6 +1,6 @@
 from __future__ import annotations
 from .location import Location, Locations
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Callable
 import pandas as pd
 from os.path import join, dirname
 
@@ -39,24 +39,36 @@ class Malls(Locations):
         return "mall"
 
     @staticmethod
-    def get(blanks=False, offline=True) -> Malls:
-        if offline:
-            raw_malls_df = pd.read_csv(join(dirname(__file__), "assets/malls.csv"))
-        else:
-            print("Retrieving 'Malls Raw' from Sheets...")
-            raw_malls_df = Locations.get_sheet("Malls Raw")
-            print("Retrieved.")
-        if blanks:
-            malls_dict = raw_malls_df.set_index("Name").to_dict("index")
-        else:
-            malls_dict = raw_malls_df[
-                pd.notna(raw_malls_df.Floors)
-                & pd.notna(raw_malls_df.Stores)
-                & pd.notna(raw_malls_df.Area)].set_index("Name").to_dict("index")
-        malls: List[Mall] = []
-        for name, info in malls_dict.items():
-            malls.append(Mall(name, **Malls._field_map(info)))
+    def get(blanks: bool=False, offline: bool=True) -> Malls:
+        raw_df = Malls._get_data_handler(offline)
+        data_dict = Malls._get_data_cleaning(blanks)(raw_df)
+        malls = Malls._get_data_compiling(data_dict)
         return Malls(*malls)
+
+    @staticmethod
+    def _get_data_handler(offline: bool) -> pd.DataFrame:
+        if offline:
+            return pd.read_csv(join(dirname(__file__), "assets/malls.csv"))
+        print("Retrieving 'Malls Raw' from Sheets...")
+        raw_df = Locations.get_sheet("Malls Raw")
+        print("Retrieved.")
+        return raw_df
+
+    @staticmethod
+    def _get_data_cleaning(blanks: bool) -> Callable[[pd.DataFrame], Dict]:
+        if blanks:
+            return lambda df: df.set_index("Name").to_dict("index")
+        return lambda df: df[
+            pd.notna(df.Floors)
+            & pd.notna(df.Stores)
+            & pd.notna(df.Area)].set_index("Name").to_dict("index")
+    
+    @staticmethod
+    def _get_data_compiling(data_dict: Dict) -> List[Mall]:
+        malls: List[Mall] = []
+        for name, info in data_dict.items():
+            malls.append(Mall(name, **Malls._field_map(info)))
+        return malls
 
     @staticmethod
     def _field_map(d: Dict) -> Dict:

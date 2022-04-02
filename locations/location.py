@@ -73,7 +73,7 @@ class Location(GeoPt, ABC):
                 setattr(self, field, None)
 
     def map_nearest(self, name: str, locations: Locations) -> Tuple[Location, float]:
-        self._nearest[name] = locations.get_nearest(self)
+        self._nearest[name] = locations.get_nearest_to(self)
         return self._nearest[name]
 
     def get_nearest(self, name: str) -> Tuple[Location, float]:
@@ -113,8 +113,9 @@ class Locations(ABC):
             print(f"{search_term} not found. Please try again.")
             return None
         print(f"{search_term} produced multiple locations "
-            f"({', '.join([result.name for result in search_results])}). "
-            "Please try again.")
+            f"({', '.join(list(search_results.keys()))}). "
+            "Returning first result.")
+        return list(search_results.values())[0]
     
     @property
     @abstractmethod
@@ -123,7 +124,22 @@ class Locations(ABC):
 
     @staticmethod
     @abstractmethod
-    def get(blanks):
+    def get(blanks: bool, offline: bool) -> Locations:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def _get_data_handler(offline: bool) -> pd.DataFrame:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def _get_data_cleaning(blanks: bool) -> Dict:
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def _get_data_compiling() -> Locations:
         pass
 
     @staticmethod
@@ -137,10 +153,10 @@ class Locations(ABC):
             self.locations.items()))
         return search_results
 
-    def get_nearest(self, point: GeoPt) -> Tuple[GeoPt, float]:
+    def get_nearest_to(self, point: GeoPt) -> Tuple[GeoPt, float]:
         return self.locations_tree.nearest(point)
 
-    def map_nearest(self, locations: Locations) -> List[Tuple[str, Tuple[Location, float]]]:
+    def map_nearest_to(self, locations: Locations) -> List[Tuple[str, Tuple[Location, float]]]:
         to_return = []
         for name, location in self.locations.items():
             location.map_nearest(locations.name, locations)

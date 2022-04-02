@@ -1,6 +1,6 @@
 from __future__ import annotations
 from .location import Location, Locations
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Callable
 import pandas as pd
 from os.path import join, dirname
 
@@ -56,22 +56,32 @@ class Schools(Locations):
 
     @staticmethod
     def get(blanks=False, offline=True) -> Schools:
-        if offline:
-            raw_schools_df = pd.read_csv(join(dirname(__file__), "assets/schools.csv"))
-        else:
-            print("Retrieving 'Schools' from Sheets...")
-            raw_schools_df = Locations.get_sheet("Schools")
-            print("Retrieved.")
+        raw_df = Schools._get_data_handler(offline)
+        data_dict = Schools._get_data_cleaning(blanks)(raw_df)
+        schools = Schools._get_data_compiling(data_dict)
+        return Schools(*schools)
 
+    @staticmethod
+    def _get_data_handler(offline: bool) -> pd.DataFrame:
+        if offline:
+            return pd.read_csv(join(dirname(__file__), "assets/schools.csv"))
+        print("Retrieving 'Schools' from Sheets...")
+        raw_df = Locations.get_sheet("Schools")
+        print("Retrieved.")
+        return raw_df
+
+    @staticmethod
+    def _get_data_cleaning(blanks: bool) -> Callable[[pd.DataFrame], Dict]:
         if blanks:
-            schools_dict = raw_schools_df.to_dict("records")
-        else:
-            schools_dict = raw_schools_df[raw_schools_df.Latitude != 0].to_dict("records")
-        
+            return lambda df: df.to_dict("records")
+        return lambda df: df[df.Latitude != 0].to_dict("records")
+
+    @staticmethod
+    def _get_data_compiling(data_dict: Dict) -> List[School]:
         schools: List[School] = []
-        for school_dict in schools_dict:
-            name = school_dict["Name"]
-            info = Schools._field_map(school_dict)
+        for school_info in data_dict:
+            name = school_info["Name"]
+            info = Schools._field_map(school_info)
             level = info["level"]
             if level == "Primary":
                 schools.append(PrimarySchool(name, **info))
@@ -79,7 +89,7 @@ class Schools(Locations):
                 schools.append(SecondarySchool(name, **info))
             elif level == "Tertiary":
                 schools.append(TertiarySchool(name, **info))
-        return Schools(*schools)
+        return schools
 
     @staticmethod
     def _field_map(d: Dict) -> Dict:
