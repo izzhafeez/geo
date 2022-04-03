@@ -3,11 +3,11 @@ from ..geometry.elevation import ElevationMap
 from ..geometry.pt import GeoPt
 from ..geometry.shape import Shape
 from ..utils.float import check_all_float
-from functools import cached_property
+from functools import cached_property, partial
 import numpy as np
 import json
 import requests
-from typing import Tuple, Optional, Dict, List
+from typing import Tuple, Optional, Dict, List, Any, Callable
 import pandas as pd
 from gsheets import Sheets
 from abc import ABC, abstractmethod
@@ -89,16 +89,16 @@ class Location(GeoPt, ABC):
         return self.get_nearest(name)[1]
 
 class Locations(ABC):
-    locations_tree: KDTree
+    locations_kdtree: KDTree
     locations: Dict[str, Location]
 
     _SHEET_ID = "1M9Ujc54yZZPlxOX3yxWuqcuJOxzIrDYz4TAFx8ifB8c"
 
     def __init__(self, *locations: Location):
-        self.locations_tree = KDTree()
+        self.locations_kdtree = KDTree()
         self.locations = {}
         for location in locations:
-            self.locations_tree.add(location)
+            self.locations_kdtree.add(location)
             self.locations[location.name] = location
 
     def __getitem__(self, search_term="") -> Location:
@@ -112,7 +112,7 @@ class Locations(ABC):
         if len(search_results) == 0:
             print(f"{search_term} not found. Please try again.")
             return None
-        print(f"{search_term} produced multiple locations "
+        print(f"'{search_term}' produced multiple locations "
             f"({', '.join(list(search_results.keys()))}). "
             "Returning first result.")
         return list(search_results.values())[0]
@@ -134,7 +134,7 @@ class Locations(ABC):
 
     @staticmethod
     @abstractmethod
-    def _get_data_cleaning(blanks: bool) -> Dict:
+    def _get_data_cleaning(blanks: bool) -> Dict[str, Any]:
         pass
 
     @staticmethod
@@ -147,14 +147,14 @@ class Locations(ABC):
 	    sheets = Sheets.from_files('client_secrets.json','~/storage.json')[Locations._SHEET_ID]
 	    return sheets.find(name).to_frame()
 
-    def get_with_regex(self, search_term="") -> Dict[str, Location]:
+    def get_with_regex(self, search_term: str="") -> Dict[str, Location]:
         search_results = dict(filter(
             lambda location: search_term in location[0],
             self.locations.items()))
         return search_results
 
     def get_nearest_to(self, point: GeoPt) -> Tuple[GeoPt, float]:
-        return self.locations_tree.nearest(point)
+        return self.locations_kdtree.nearest(point)
 
     def map_nearest_to(self, locations: Locations) -> List[Tuple[str, Tuple[Location, float]]]:
         to_return = []
@@ -162,3 +162,6 @@ class Locations(ABC):
             location.map_nearest(locations.name, locations)
             to_return.append((name, location.get_nearest(locations.name)))
         return to_return
+
+    def filter(self, location_filter: Callable[[Location], bool]=lambda location: True) -> Locations:
+        return Locations(*list(filter(location_filter, self.locations.values())))
