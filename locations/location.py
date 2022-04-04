@@ -163,5 +163,10 @@ class Locations(ABC):
             to_return.append((name, location.get_nearest(locations.name)))
         return to_return
 
-    def filter(self, location_filter: Callable[[Location], bool]=lambda location: True) -> Locations:
-        return Locations(*list(filter(location_filter, self.locations.values())))
+    def filter(self, location_filter: Callable[[Location], bool]=lambda location: True, name: str="") -> Locations:
+        locations = Locations(*list(filter(location_filter, self.locations.values())))
+        if name == "":
+            locations.name = self.name
+        else:
+            locations.name = name
+        return locations
