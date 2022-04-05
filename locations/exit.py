@@ -13,23 +13,13 @@ class Exit(Location):
         self._try_setter(fields, kwargs)
         super().__init__(name, lat=self.lat, lon=self.lon, shape=self.shape)
 
-    def __str__(self) -> str:
-        return f"<Exit: {self.name}, ({self.lat}, {self.lon})>"
-    
-    def __repr__(self) -> str:
-        return f"<Exit: {self.name}>"
-
 class Exits(Locations):
     _FIELD_MAP = {
         "EXIT_CODE_": "exit_code",
     }
 
-    def __init__(self, *exits: Exit):
-        super().__init__(*exits)
-
-    @property
-    def name(self) -> str:
-        return "exit"
+    def __init__(self, *exits: Exit, name: str="exit"):
+        super().__init__(*exits, name=name)
 
     @staticmethod
     def get(blanks: bool=False, offline: bool=True) -> Exits:

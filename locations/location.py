@@ -3,7 +3,7 @@ from ..geometry.elevation import ElevationMap
 from ..geometry.pt import GeoPt
 from ..geometry.shape import Shape
 from ..utils.float import check_all_float
-from functools import cached_property, partial
+from functools import cached_property
 import numpy as np
 import json
 import requests
@@ -18,7 +18,7 @@ class Location(GeoPt, ABC):
     lat: Optional[float] = None
     lon: Optional[float] = None
     shape: Optional[Shape] = None
-    nearest: Dict[Location, float]
+    _nearest: Dict[Location, float]
 
     def __init__(self, name: str, lat: float=None, lon: float=None, shape: Shape=None):
         self.name = name
@@ -27,13 +27,13 @@ class Location(GeoPt, ABC):
         self._nearest = {}
         super().__init__(lat=lat, lon=lon)
 
-    @abstractmethod
     def __str__(self) -> str:
-        pass
+        type_ = str(type(self)).split(".")[-1].split("'")[0]
+        return f"<{type_}: {self.name}, ({self.lat}, {self.lon})>"
 
-    @abstractmethod
     def __repr__(self) -> str:
-        pass
+        type_ = str(type(self)).split(".")[-1].split("'")[0]
+        return f"<{type_}: {self.name}>"
     
     def _get_coords(self, lat: float, lon: float) -> None:
         if check_all_float(lat, lon):
@@ -74,27 +74,24 @@ class Location(GeoPt, ABC):
 
     def map_nearest(self, name: str, locations: Locations) -> Tuple[Location, float]:
         self._nearest[name] = locations.get_nearest_to(self)
+        setattr(self, "nearest_"+name, self._nearest[name])
         return self._nearest[name]
 
-    def get_nearest(self, name: str) -> Tuple[Location, float]:
+    def nearest(self, name: str) -> Tuple[Location, float]:
         if name not in self._nearest:
-            print(f"Nearest '{name}' not defined. Please use map_nearest.")
+            print(f"Nearest '{name}' not defined. Available options: {', '.join([self._nearest.keys()])}.")
             return (None, float("inf"))
         return self._nearest[name]
-
-    def get_nearest_location(self, name: str) -> Location:
-        return self.get_nearest(name)[0]
-    
-    def get_nearest_distance(self, name: str) -> float:
-        return self.get_nearest(name)[1]
 
 class Locations(ABC):
     locations_kdtree: KDTree
     locations: Dict[str, Location]
+    name: str
 
     _SHEET_ID = "1M9Ujc54yZZPlxOX3yxWuqcuJOxzIrDYz4TAFx8ifB8c"
 
-    def __init__(self, *locations: Location):
+    def __init__(self, *locations: Location, name: str):
+        self.name = name
         self.locations_kdtree = KDTree()
         self.locations = {}
         for location in locations:
@@ -116,11 +113,6 @@ class Locations(ABC):
             f"({', '.join(list(search_results.keys()))}). "
             "Returning first result.")
         return list(search_results.values())[0]
-    
-    @property
-    @abstractmethod
-    def name(self):
-        pass
 
     @staticmethod
     @abstractmethod
@@ -160,13 +152,19 @@ class Locations(ABC):
         to_return = []
         for name, location in self.locations.items():
             location.map_nearest(locations.name, locations)
-            to_return.append((name, location.get_nearest(locations.name)))
+            to_return.append((name, location.nearest(locations.name)))
         return to_return
 
     def filter(self, location_filter: Callable[[Location], bool]=lambda location: True, name: str="") -> Locations:
-        locations = Locations(*list(filter(location_filter, self.locations.values())))
+        locations = type(self)(*list(filter(location_filter, self.locations.values())))
         if name == "":
             locations.name = self.name
         else:
             locations.name = name
         return locations
+
+    def show(self, attr: str="name") -> Dict[str, Any]:
+        return {name: getattr(value, attr) for name, value in self.locations.items()}
+
+    def sort(self, comparator: Callable[[Location], Any], reverse=False) -> str:
+        return {k: comparator(v) for k, v in sorted(self.locations.items(), key=lambda item: comparator(item[1]), reverse=reverse)}

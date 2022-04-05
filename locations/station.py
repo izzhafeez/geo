@@ -14,12 +14,6 @@ class Station(Location):
         self._try_setter(fields, kwargs)
         super().__init__(name, lat=self.lat, lon=self.lon, shape=self.shape)
 
-    def __str__(self) -> str:
-        return f"<Station: {self.name}, ({self.lat}, {self.lon})>"
-    
-    def __repr__(self) -> str:
-        return f"<Station: {self.name}>"
-
 class MRTStation(Station):
     def __init__(self):
         pass
@@ -35,12 +29,8 @@ class Stations(Locations):
         "EXIT_CODE_": "exit_code",
     }
 
-    def __init__(self, *stations: Station):
-        super().__init__(*stations)
-
-    @property
-    def name(self) -> str:
-        return "exit"
+    def __init__(self, *stations: Station, name: str="station"):
+        super().__init__(*stations, name=name)
 
     @staticmethod
     def get(blanks: bool=False, offline: bool=True) -> Stations:

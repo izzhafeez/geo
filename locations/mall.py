@@ -15,12 +15,6 @@ class Mall(Location):
         self._try_setter(fields, kwargs)
         super().__init__(name, lat=self.lat, lon=self.lon, shape=self.shape)
 
-    def __str__(self) -> str:
-        return f"<Mall: {self.name}, ({self.lat}, {self.lon})>"
-    
-    def __repr__(self) -> str:
-        return f"<Mall: {self.name}>"
-
 class Malls(Locations):
     _FIELD_MAP = {
         "Latitude": "lat",
@@ -31,12 +25,8 @@ class Malls(Locations):
         "Area": "retail_area"
     }
 
-    def __init__(self, *malls: Mall):
-        super().__init__(*malls)
-
-    @property
-    def name(self) -> str:
-        return "mall"
+    def __init__(self, *malls: Mall, name: str="mall"):
+        super().__init__(*malls, name=name)
 
     @staticmethod
     def get(blanks: bool=False, offline: bool=True) -> Malls:

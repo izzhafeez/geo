@@ -15,12 +15,6 @@ class School(Location):
         fields = ["lat", "lon", "shape", "code", "funding", "level", "opening_year", "gender"]
         self._try_setter(fields, kwargs)
         super().__init__(name, lat=self.lat, lon=self.lon, shape=self.shape)
-    
-    def __str__(self) -> str:
-        return f"<{self.level}School: {self.name}, ({self.lat}, {self.lon})>"
-    
-    def __repr__(self) -> str:
-        return f"<{self.level}School: {self.name}>"
 
 class PrimarySchool(School):
     def __init__(self, name: str, **kwargs):
@@ -47,12 +41,8 @@ class Schools(Locations):
         "Type": "gender",
     }
 
-    def __init__(self, *schools: School):
-        super().__init__(*schools)
-
-    @property
-    def name(self) -> str:
-        return "school"
+    def __init__(self, *schools: School, name="school"):
+        super().__init__(*schools, name=name)
 
     @staticmethod
     def get(blanks=False, offline=True) -> Schools:
