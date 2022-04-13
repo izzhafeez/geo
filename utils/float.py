@@ -1,15 +1,10 @@
-def check_float(s):
-    try:
-        float(s)
-        return True
-    except:
+from typing import Any, Optional
+
+def is_float(x: Optional[Any]):
+    if not x:
         return False
-
-def check_all_float(*s):
-    return all([check_float(x) for x in s])
-
-def check_all_float_dict(d):
-    return all([check_float(v) for k, v in d.items()])
-
-def convert_all_float_dict(d):
-    return {k: float(v) for k, v in d.items()}
+    try:
+        y = float(x)
+        return True
+    except ValueError:
+        return False

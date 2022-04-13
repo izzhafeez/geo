@@ -1,1 +1,1 @@
-__all__ = ["distance", "elevation", "line", "pt", "shape", "assets"]
+__all__ = ["distance", "elevation", "line", "pt", "shape", "assets", "multishape"]

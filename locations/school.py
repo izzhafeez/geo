@@ -1,10 +1,21 @@
 from __future__ import annotations
 from .location import Location, Locations
-from typing import Optional, Dict, List, Callable
+from typing import Optional, Dict, List, Callable, Any
 import pandas as pd
 from os.path import join, dirname
 
 class School(Location):
+    """
+    Object to encapsulate a school in Singapore.
+
+    Fields:
+        code (Optional[int]): the code number assigned to the school, usually a 4 digit number.
+        funding (str): whether the school is government funded etc.
+        level (str): whether the school is Primary, Secondary or Tertiary level.
+        opening_year (Optional[int]): the year the school was opened.
+            If the school has been renamed/merged, choose that year instead.
+        gender (str): whether the school is mixed, girls or boys.
+    """
     code: Optional[int]
     funding: str
     level: str
@@ -61,13 +72,16 @@ class Schools(Locations):
         return raw_df
 
     @staticmethod
-    def _get_data_cleaning(blanks: bool) -> Callable[[pd.DataFrame], Dict]:
+    def _get_data_cleaning(blanks: bool) -> Callable[[pd.DataFrame], List[Dict[str, Any]]]:
         if blanks:
             return lambda df: df.to_dict("records")
-        return lambda df: df[df.Latitude != 0].to_dict("records")
+        def clean_df(df):
+            filtered_df: pd.DataFrame = df[df.Latitude != 0]
+            return filtered_df.to_dict("records")
+        return clean_df
 
     @staticmethod
-    def _get_data_compiling(data_dict: Dict) -> List[School]:
+    def _get_data_compiling(data_dict: List[Dict[str, Any]]) -> List[School]:
         schools: List[School] = []
         for school_info in data_dict:
             name = school_info["Name"]
@@ -82,8 +96,7 @@ class Schools(Locations):
         return schools
 
     @staticmethod
-    def _field_map(d: Dict) -> Dict:
+    def _field_map(d: Dict[str, Any]) -> Dict[str, Any]:
         for old_field, new_field in Schools._FIELD_MAP.items():
-            d[new_field] = d[old_field]
-            d.pop(old_field)
+            d[new_field] = d.pop(old_field)
         return d

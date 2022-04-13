@@ -1,7 +1,7 @@
 from __future__ import annotations
 from shapely import geometry
 from .distance import DistanceCalculator
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 class Pt(geometry.Point):
     x: float
@@ -16,12 +16,20 @@ class Pt(geometry.Point):
     def __repr__(self) -> str:
         return f"({self.x}, {self.y})"
 
+    @staticmethod
+    def from_point(point: geometry.Point) -> Pt:
+        print(point)
+        return Pt(point.x, point.y)
+
+    def as_geo_pt(self) -> GeoPt:
+        return GeoPt(self.y, self.x)
+
     def get_distance(self, point: Pt) -> float:
         if isinstance(point, GeoPt):
             raise TypeError("Cannot be GeoPt!")
         return ((self.y-point.y)**2+(self.x-point.x)**2)**0.5
     
-    def get_closest_point(self, *points: List[Pt]) -> Tuple[Pt, float]:
+    def get_closest_point(self, *points: Pt) -> Tuple[Optional[Pt], float]:
         nearest_point = None
         nearest_dist = float("inf")
         for point in points:
@@ -52,7 +60,10 @@ class GeoPt(Pt):
     def __repr__(self) -> str:
         return f"({self.lat}, {self.lon})"
     
-    def get_distance(self, point: Pt) -> float:
+    def as_pt(self) -> Pt:
+        return Pt(self.x, self.y)
+    
+    def get_distance(self, point: GeoPt) -> float:
         if isinstance(point, GeoPt):
             return DistanceCalculator.get_distance(self, point)
         raise TypeError("Must be a GeoPt!")
@@ -60,7 +71,7 @@ class GeoPt(Pt):
     def get_distance_basic(self, point: GeoPt) -> float:
         return ((self.y-point.y)**2+(self.x-point.x)**2)**0.5
     
-    def get_closest_point(self, *points: List[Pt]) -> Tuple[GeoPt, float]:
+    def get_closest_point(self, *points: GeoPt) -> Tuple[Optional[GeoPt], float]:
         nearest_point = None
         nearest_dist = float("inf")
         for point in points:
@@ -68,6 +79,8 @@ class GeoPt(Pt):
             if nearest_dist > dist:
                 nearest_dist = dist
                 nearest_point = point
+        if not nearest_point:
+            return (None, nearest_dist)
         return (nearest_point, self.get_distance(nearest_point))
 
     def coords_as_tuple_latlong(self) -> Tuple[float, float]:

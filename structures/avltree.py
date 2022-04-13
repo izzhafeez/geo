@@ -172,10 +172,9 @@ class AVLTree:
         def pre_order_helper(node: AVLTree.Node):
             if not node:
                 return None
-            else:
-                L.append((self.get_val(node), self.get_val(node.left), self.get_val(node.right)))
-                pre_order_helper(node.left)
-                pre_order_helper(node.right)
+            L.append((self.get_val(node), self.get_val(node.left), self.get_val(node.right)))
+            pre_order_helper(node.left)
+            pre_order_helper(node.right)
         pre_order_helper(self.root)
         return L
     
@@ -183,12 +182,11 @@ class AVLTree:
         def rank_helper(node: AVLTree.Node, key: Any) -> int:
             if not node:
                 return 0
+            elif key < node.val:
+                return rank_helper(node.left, key)
+            elif key > node.val:
+                return self.get_weight(node) - self.get_weight(node.right) + rank_helper(node.right, key)
             else:
-                if key < node.val:
-                    return rank_helper(node.left, key)
-                elif key > node.val:
-                    return self.get_weight(node) - self.get_weight(node.right) + rank_helper(node.right, key)
-                else:
-                    return self.get_weight(node.left)
+                return self.get_weight(node.left)
         return rank_helper(self.root, key) + 1
     
