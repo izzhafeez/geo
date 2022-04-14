@@ -11,13 +11,13 @@ This class encapsulates a MultiShape object, with shapes represented
 Fields:
     shapes: a IntervalTree full of shapes representing the MultiShape
 """
-class MultiShape(geometry.multipolygon.MultiPolygon):
-    shapes: IntervalTree
+# class MultiShape(geometry.multipolygon.MultiPolygon):
+#     shapes: IntervalTree
 
-    def __init__(self, shapes: List[Shape]):
-        super().__init__(shapes)
-        self.shapes = IntervalTree()
-        self.shapes.add_all(*shapes)
+#     def __init__(self, shapes: List[Shape]):
+#         super().__init__(shapes)
+#         self.shapes = IntervalTree()
+#         self.shapes.add_all(*shapes)
         
-    def get_nearest(self, point: Pt) -> Tuple[Pt, float]:
-        return self.points.nearest(point)
+#     def get_nearest(self, point: Pt) -> Tuple[Pt, float]:
+#         return self.points.nearest(point)

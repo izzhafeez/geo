@@ -30,21 +30,9 @@ class Location(GeoPt, ABC):
     lat:      float
     lon:      float
     shape:    Optional[Shape] = None
-    _nearest: Dict[str, Tuple[GeoPt, float]]
+    _nearest: Dict[str, Tuple[Optional[GeoPt], float]]
 
     def __init__(self, name: str, lat: float=None, lon: float=None, shape: Shape=None):
-        """
-        Initialiser for the Location object
-
-        Args:
-            name (str): the name of the location.
-            lat (float, optional): the latitude coordinate of the location.
-                Defaults to None.
-            lon (float, optional): the longitude coordinate of the location.
-                Defaults to None.
-            shape (Shape, optional): the shape representing the location.
-                Defaults to None.
-        """
         self.name = name
         self.shape = shape
         lat, lon = self._get_coords(lat, lon)
@@ -119,7 +107,7 @@ class Location(GeoPt, ABC):
             point (GeoPt): the destination point to query.
 
         Returns:
-            float: distance in metres.
+            float: distance in km.
         """
         if self.shape is not None:
             if self.shape.contains(point):
@@ -144,7 +132,7 @@ class Location(GeoPt, ABC):
             else:
                 setattr(self, field, None)
 
-    def map_nearest(self, name: str, locations: Locations) -> Tuple[GeoPt, float]:
+    def map_nearest(self, name: str, locations: Locations) -> Tuple[Optional[GeoPt], float]:
         """
         From a set of locations, get the nearest one to this location.
 
@@ -155,7 +143,8 @@ class Location(GeoPt, ABC):
         Returns:
             Tuple[GeoPt, float]: pair of point and distance to point.
         """
-        self._nearest[name] = locations.get_nearest_to(self)
+        nearest_point, nearest_distance = locations.get_nearest_to(self)
+        self._nearest[name] = (nearest_point, nearest_distance) if nearest_point else (None, float("inf"))
         setattr(self, "nearest_"+name, self._nearest[name])
         return self._nearest[name]
 
@@ -352,7 +341,7 @@ class Locations(ABC):
                                      self.locations.items()))
         return search_results
 
-    def get_nearest_to(self, point: GeoPt) -> Tuple[GeoPt, float]:
+    def get_nearest_to(self, point: GeoPt) -> Tuple[Optional[GeoPt], float]:
         """
         For an external point, find which of this group's locations is the closest.
 
@@ -363,7 +352,7 @@ class Locations(ABC):
             Tuple[GeoPt, float]: point-distance pair.
         """
         nearest_point, distance = self.locations_kdtree.nearest(point)
-        return (nearest_point.as_geo_pt(), distance)
+        return (nearest_point.as_geo_pt(), distance) if nearest_point else (None, float("inf"))
 
     def map_nearest_to(self, locations: Locations) -> List[Tuple[str, Tuple[Location, float]]]:
         """

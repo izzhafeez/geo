@@ -40,7 +40,7 @@ class PlanningAreas(Locations):
     def __init__(self, *areas: PlanningArea, name="planning_area"):
         self.locations_interval_tree = IntervalTree()
         super().__init__(*areas, name=name)
-        self.locations_interval_tree.add_all([area.shape for area in areas], areas)
+        self.locations_interval_tree.add_all([area.shape for area in areas if area.shape], [area for area in areas if area])
 
     @staticmethod
     def get(blanks=False, offline=True) -> PlanningAreas:
@@ -58,9 +58,9 @@ class PlanningAreas(Locations):
     def _get_data_cleaning(blanks: bool) -> Callable[[pd.DataFrame], List[Dict[str, Any]]]:
         def clean_data(df: pd.DataFrame) -> List[Dict[str, Any]]:
             extract_from_description = lambda pattern: df.Description.str.extract(pattern)
-            df["SubzoneCode"]  = extract_from_description("Subzone Code.*?<td>(.*?)</td>")
-            df["Planning"]     = extract_from_description("Planning Area Name.*?<td>(.*?)</td>")
-            df["Region"]       = extract_from_description("Region Name.*?<td>(.*?)</td>")
+            df["SubzoneCode"] = extract_from_description("Subzone Code.*?<td>(.*?)</td>")
+            df["Planning"]    = extract_from_description("Planning Area Name.*?<td>(.*?)</td>")
+            df["Region"]      = extract_from_description("Region Name.*?<td>(.*?)</td>")
             df = df.drop("Description",axis=1)
             # df["bounds"] = df.geometry.apply(lambda x: x.bounds)
             df = df[["Name", "SubzoneCode", "Planning", "Region", "geometry"]]
