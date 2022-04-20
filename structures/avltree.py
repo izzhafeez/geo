@@ -1,57 +1,61 @@
 from __future__ import annotations
-from typing import Any, List, Optional, Tuple
+from typing import Any, Generic, List, Optional, Tuple, TypeVar
 
-class AVLTree:
+from .comparable import Comparable
+
+T = TypeVar("T", bound=Comparable)
+
+class Node(Generic[T]):
+    """
+    Encapsulates a Node of the AVLTree.
+    
+    Fields:
+        val (U): the value to be assigned to the node.
+        left (Optional[Node[T]]): the left child of the node.
+        right (Optional[Node[T]]): the right child of the node.
+        height (int): the height of the tree rooted at the node.
+        count (int): duplicate values are captured here, so we can have nodes with >1 counts.
+        weight (int): the number of nodes on the tree rooted at the node.
+    """
+    val:    T
+    left:   Optional[Node[T]]
+    right:  Optional[Node[T]]
+    height: int
+    count:  int
+    weight: int
+
+    def __init__(self, val: T):
+        self.val = val
+        self.left = None
+        self.right = None
+        self.height = 1
+        self.count = 1
+        self.weight = 1
+
+class AVLTree(Generic[T]):
     """
     Encapsulates an AVLTree capable of performing rotations, insertions and deletions.
 
     Fields:
-        root (Optional[Node]): the root of the tree.
+        root (Optional[Node[T]]): the root of the tree.
     """
-    root: Optional[Node]
-    
-    class Node:
-        """
-        Encapsulates a Node of the AVLTree.
-        
-        Fields:
-            val (Any): the value to be assigned to the node.
-            left (Optional[AVLTree.Node]): the left child of the node.
-            right (Optional[AVLTree.Node]): the right child of the node.
-            height (int): the height of the tree rooted at the node.
-            count (int): duplicate values are captured here, so we can have nodes with >1 counts.
-            weight (int): the number of nodes on the tree rooted at the node.
-        """
-        val:    Any
-        left:   Optional[AVLTree.Node]
-        right:  Optional[AVLTree.Node]
-        height: int
-        count:  int
-        weight: int
-
-        def __init__(self, val: Any):
-            self.val = val
-            self.left = None
-            self.right = None
-            self.height = 1
-            self.count = 1
-            self.weight = 1
+    root: Optional[Node[T]]
             
     def __init__(self):
         self.root = None
     
-    def insert(self, key: Any) -> None:
+    def insert(self, key: T) -> None:
         """
         Inserts a key to the tree, triggering rotations.
         If the key already exists, then increment the key's count.
         Must be comparable or else the < > operators won't work.
 
         Args:
-            key (Any): key to be added.
+            key (T): key to be added.
         """
-        def insert_helper(node: Optional[AVLTree.Node], key: Any) -> Optional[AVLTree.Node]:
+        def insert_helper(node: Optional[Node[T]], key: T) -> Optional[Node[T]]:
             if not node:
-                return AVLTree.Node(key)
+                return Node[T](key)
             elif key < node.val:
                 node.left = insert_helper(node.left, key)
             elif key > node.val:
@@ -62,31 +66,34 @@ class AVLTree:
             self.set_weight(node)
             
             balance = self.get_balance(node)
+            
+            left_val = self.get_val(node.left)
+            right_val = self.get_val(node.right)
 
-            if balance > 1 and key < self.get_val(node.left):
+            if balance > 1 and key < left_val:
                 return self.right_rotate(node)
-            if balance < -1 and key > self.get_val(node.right):
+            if balance < -1 and right_val and key > right_val:
                 return self.left_rotate(node)
-            if balance > 1 and key > self.get_val(node.left):
+            if balance > 1 and left_val and key > left_val:
                 node.left = self.left_rotate(node.left)
                 return self.right_rotate(node)
-            if balance < -1 and key < self.get_val(node.right):
+            if balance < -1 and key < right_val:
                 node.right = self.right_rotate(node.right)
                 return self.left_rotate(node)
 
             return node
         self.root = insert_helper(self.root, key)
 
-    def delete(self, key: Any) -> None:
+    def delete(self, key: Optional[T]) -> None:
         """
         Deletes a key from the tree, triggering rotations.
         If the key has onle one count, then remove it from the tree.
         Otherwise, just decrement its count and update weights along the way.
 
         Args:
-            key (Any): key to be added.
+            key (T): key to be added.
         """
-        def delete_helper(node: Optional[AVLTree.Node], key: Any) -> Optional[AVLTree.Node]:
+        def delete_helper(node: Optional[Node[T]], key: T) -> Optional[Node[T]]:
             if not node:
                 return None
             elif key < node.val:
@@ -125,17 +132,18 @@ class AVLTree:
                 node.right = self.right_rotate(node.right)
                 return self.left_rotate(node)
             return node
-        self.root = delete_helper(self.root, key)
+        if key:
+            self.root = delete_helper(self.root, key)
  
-    def left_rotate(self, node: Optional[AVLTree.Node]) -> Optional[AVLTree.Node]:
+    def left_rotate(self, node: Optional[Node[T]]) -> Optional[Node[T]]:
         """
         Rotates the node left.
 
         Args:
-            node (Optional[AVLTree.Node]): node to be rotated.
+            node (Optional[Node[T]]): node to be rotated.
 
         Returns:
-            Optional[AVLTree.Node]: the resulting root node.
+            Optional[Node[T]]: the resulting root node.
         """
         if not node or not node.right:
             return node
@@ -150,15 +158,15 @@ class AVLTree:
         self.set_weight(right)
         return right
  
-    def right_rotate(self, node: Optional[AVLTree.Node]) -> Optional[AVLTree.Node]:
+    def right_rotate(self, node: Optional[Node[T]]) -> Optional[Node[T]]:
         """
         Rotates the node right.
 
         Args:
-            node (Optional[AVLTree.Node]): node to be rotated.
+            node (Optional[Node[T]]): node to be rotated.
 
         Returns:
-            Optional[AVLTree.Node]: the resulting root node.
+            Optional[Node[T]]: the resulting root node.
         """
         if not node or not node.left:
             return node
@@ -173,40 +181,40 @@ class AVLTree:
         self.set_weight(left)
         return left
     
-    def get_val(self, node: Optional[AVLTree.Node]) -> Any:
+    def get_val(self, node: Optional[Node[T]]) -> Optional[T]:
         if not node:
             return None
         return node.val
  
-    def get_height(self, node: Optional[AVLTree.Node]) -> int:
+    def get_height(self, node: Optional[Node[T]]) -> int:
         if not node:
             return 0
         return node.height
     
-    def set_height(self, node: AVLTree.Node) -> None:
+    def set_height(self, node: Node[T]) -> None:
         node.height = 1 + max(self.get_height(node.left), self.get_height(node.right))
         
-    def get_weight(self, node: Optional[AVLTree.Node]) -> int:
+    def get_weight(self, node: Optional[Node[T]]) -> int:
         if not node:
             return 0
         return node.weight
     
-    def set_weight(self, node: AVLTree.Node) -> None:
+    def set_weight(self, node: Node[T]) -> None:
         node.weight = node.count + self.get_weight(node.left) + self.get_weight(node.right)
  
-    def get_balance(self, node: Optional[AVLTree.Node]) -> int:
+    def get_balance(self, node: Optional[Node[T]]) -> int:
         if not node:
             return 0
         return self.get_height(node.left) - self.get_height(node.right)
     
-    def get_min_value(self) -> Any:
+    def get_min_value(self) -> Optional[T]:
         """
         Gets the minimum value of the tree.
 
         Returns:
-            Any: the minimum value.
+            T: the minimum value.
         """
-        def get_min_value_helper(node: Optional[AVLTree.Node]) -> Any:
+        def get_min_value_helper(node: Optional[Node[T]]) -> Optional[T]:
             if not node:
                 return None
             elif not node.left:
@@ -214,15 +222,15 @@ class AVLTree:
             return get_min_value_helper(node.left)
         return get_min_value_helper(self.root)
     
-    def get_min_value_node(self, node: AVLTree.Node) -> AVLTree.Node:
+    def get_min_value_node(self, node: Node[T]) -> Node[T]:
         """
         Get the node containing the minimum value in the tree rooted at this node.
 
         Args:
-            node (AVLTree.Node): node to be queried.
+            node (Node[T]): node to be queried.
 
         Returns:
-            AVLTree.Node: node containing the minimum value.
+            Node: node containing the minimum value.
         """
         if node is None or node.left is None:
             return node
@@ -236,7 +244,7 @@ class AVLTree:
             List[Any]: a list of values in the tree.
         """
         L = []
-        def in_order_helper(node: Optional[AVLTree.Node]) -> None:
+        def in_order_helper(node: Optional[Node[T]]) -> None:
             if not node:
                 return
             in_order_helper(node.left)
@@ -245,15 +253,15 @@ class AVLTree:
         in_order_helper(self.root)
         return L
     
-    def pre_order(self) -> List[Tuple[Any, Any, Any]]:
+    def pre_order(self) -> List[Tuple[T, T, T]]:
         """
         Pre order traversal of the tree done by recursion.
 
         Returns:
-            List[Tuple[Any, Any, Any]]: a list of parent-leftchild-rightchild tuples.
+            List[Tuple[T, T, T]]: a list of parent-leftchild-rightchild tuples.
         """
         L = []
-        def pre_order_helper(node: Optional[AVLTree.Node]) -> None:
+        def pre_order_helper(node: Optional[Node[T]]) -> None:
             if not node:
                 return
             L.append((self.get_val(node), self.get_val(node.left), self.get_val(node.right)))
@@ -262,18 +270,18 @@ class AVLTree:
         pre_order_helper(self.root)
         return L
     
-    def get_rank(self, key: Any) -> int:
+    def get_rank(self, key: T) -> int:
         """
         Gets the rank of a particular key in the tree.
         Does take into account duplicate values.
 
         Args:
-            key (Any): key to be queried.
+            key (T): key to be queried.
 
         Returns:
             int: its rank, starting from 1.
         """
-        def rank_helper(node: Optional[AVLTree.Node], key: Any) -> int:
+        def rank_helper(node: Optional[Node[T]], key: T) -> int:
             if not node:
                 return 0
             elif key < node.val:

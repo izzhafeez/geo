@@ -1,10 +1,12 @@
 from __future__ import annotations
-from ..color.color import Color
+from os.path import join, dirname
+from typing import Dict, List, Optional
+
 from PIL import Image
 import numpy as np
-from typing import List, Dict, Optional
-from os.path import join, dirname
-from ..error.value_error.out_of_bounds_error import OutOfBoundsError
+
+from color.color import Color
+from error.value_error.out_of_bounds_error import OutOfBoundsError
 
 """
 This script maps a set of lat longs in 

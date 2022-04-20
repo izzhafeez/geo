@@ -4,9 +4,10 @@ from typing import Dict, List, Optional, Tuple
 from shapely import geometry
 from shapely.ops import nearest_points
 
-from .pt import Pt, GeoPt
-from ..structures.bound import Bound
-from ..structures.kdtree import KDTree
+from geom.geo_pt import GeoPt
+from geom.pt import Pt
+from structures.bound import Bound
+from structures.kdtree import KDTree
 
 class Shape(geometry.polygon.Polygon):
     """

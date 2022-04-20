@@ -1,13 +1,14 @@
 from __future__ import annotations
+from typing import Any, Callable, Dict, List, Optional, Tuple
+from os.path import dirname, join
+
+import fiona
 import geopandas as gpd
 import pandas as pd
-import fiona
-from ..geometry.pt import GeoPt
-from ..structures.interval2d import IntervalTree
-from shapely import geometry
+
 from .location import Location, Locations
-from typing import Callable, Dict, List, Any, Tuple
-from os.path import join, dirname
+from geom.geo_pt import GeoPt
+from structures.interval2d import IntervalTree
 
 class PlanningArea(Location):
     """
@@ -28,7 +29,7 @@ class PlanningArea(Location):
         super().__init__(name, lat=self.lat, lon=self.lon, shape=self.shape)
 
 class PlanningAreas(Locations):
-    locations_interval_tree: IntervalTree
+    locations_interval_tree: IntervalTree[PlanningArea]
     _FIELD_MAP = {
         "geometry": "shape",
         "SubzoneCode": "code",
@@ -38,7 +39,7 @@ class PlanningAreas(Locations):
     _PATH_TO_PLANNING_AREAS = join(dirname(__file__), "assets/Subzone_Census2010.kml")
 
     def __init__(self, *areas: PlanningArea, name="planning_area"):
-        self.locations_interval_tree = IntervalTree()
+        self.locations_interval_tree = IntervalTree[PlanningArea]()
         super().__init__(*areas, name=name)
         self.locations_interval_tree.add_all([area.shape for area in areas if area.shape], [area for area in areas if area])
 
@@ -82,6 +83,6 @@ class PlanningAreas(Locations):
                 d[new_field] = d.pop(old_field)
         return d
 
-    def get_nearest_to(self, point: GeoPt) -> Tuple[PlanningArea, float]:
+    def get_nearest_to(self, point: GeoPt) -> Tuple[Optional[PlanningArea], float]:
         return (self.locations_interval_tree.find_shape(point), 0)
         

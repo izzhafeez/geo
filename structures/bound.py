@@ -1,10 +1,13 @@
 from __future__ import annotations
+from typing import Generic, get_args, TypeVar
 
-from shapely import geometry
+import shapely.geometry
 
-from ..geometry.pt import Pt
+from geom.pointable import Pointable
 
-class Bound:
+T = TypeVar("T", bound=Pointable)
+
+class Bound(Generic[T]):
     """
     Encapsulates a rectangular box, possessing coordinates for each of its sides.
 
@@ -40,12 +43,12 @@ class Bound:
         self.min_y = min(self.min_y, bound.min_y)
         self.max_y = max(self.max_y, bound.max_y)
     
-    def contains(self, point: Pt) -> bool:
+    def contains(self, point: T) -> bool:
         """
         Checks whether a point lies within this bound.
 
         Args:
-            point (Pt): point to be queried.
+            point (T): point to be queried.
 
         Returns:
             bool: whether the point lies within the bound.
@@ -56,17 +59,17 @@ class Bound:
                 and point.y <= self.max_y)
 
     @property
-    def center(self) -> Pt:
+    def center(self) -> T:
         """
         Get the center point of the bound.
 
         Returns:
-            Pt: center point of the bound.
+            T: center point of the bound.
         """
-        return Pt((self.max_x+self.min_x)/2, (self.max_y+self.min_y)/2)
+        return get_args(T)[0]((self.max_x+self.min_x)/2, (self.max_y+self.min_y)/2)
 
     @staticmethod
-    def get_bound_from_shape(shape: geometry.polygon.Polygon) -> Bound:
+    def get_bound_from_shape(shape: shapely.geometry.polygon.Polygon) -> Bound:
         """
         Converts a shape into a Bound.
 

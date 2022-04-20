@@ -1,8 +1,10 @@
 from __future__ import annotations
-from .location import Location, Locations
-from typing import Optional, Dict, List, Callable, Any
+from os.path import dirname, join
+from typing import Any, Callable, Dict, List, Optional
+
 import pandas as pd
-from os.path import join, dirname
+
+from .location import Location, Locations
 
 class Mall(Location):
     """

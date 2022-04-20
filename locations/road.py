@@ -1,6 +1,6 @@
 import geopandas as gpd
 import fiona
-from ..geometry.line import Line
+from geom.line import Line
 
 class Road(Line):
     gpd.io.file.fiona.drvsupport.supported_drivers["KML"] = "rw"

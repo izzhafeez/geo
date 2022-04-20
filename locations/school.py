@@ -1,8 +1,10 @@
 from __future__ import annotations
-from .location import Location, Locations
-from typing import Optional, Dict, List, Callable, Any
+from os.path import dirname, join
+from typing import Any, Callable, Dict, List, Optional
+
 import pandas as pd
-from os.path import join, dirname
+
+from .location import Location, Locations
 
 class School(Location):
     """
@@ -16,11 +18,11 @@ class School(Location):
             If the school has been renamed/merged, choose that year instead.
         gender (str): whether the school is mixed, girls or boys.
     """
-    code: Optional[int]
-    funding: str
-    level: str
+    code:         Optional[int]
+    funding:      str
+    level:        str
     opening_year: Optional[int]
-    gender: str
+    gender:       str
 
     def __init__(self, name: str, **kwargs):
         fields = ["lat", "lon", "shape", "code", "funding", "level", "opening_year", "gender"]

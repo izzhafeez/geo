@@ -1,38 +1,39 @@
 from __future__ import annotations
 from functools import cached_property
-from typing import List, Optional, Tuple
+from typing import List, Generic, Optional, Tuple, TypeVar
 
 from .bound import Bound
-from ..geometry.pt import GeoPt
+from geom.pointable import Pointable
 
+T = TypeVar("T", bound=Pointable)
 
 class XY:
     X, Y = "x", "y"
 
-class KDNode:
+class KDNode(Generic[T]):
     """
     Encapsulates a node in a KDTree.
 
     Fields:
-        point (GeoPt): the point it is representing in the tree.
+        point (T): the point it is representing in the tree.
         level (str): whether the we compare x or y-values at this point.
             (We alternate between x and y).
-        left (Optional[KDNode]): the left child of this node.
-        right (Optional[KDNode]): the right child of this node.
+        left (Optional[KDNode[T]]): the left child of this node.
+        right (Optional[KDNode[T]]): the right child of this node.
     """
-    point: GeoPt
+    point: T
     level: str
-    left:  Optional[KDNode]
-    right: Optional[KDNode]
+    left:  Optional[KDNode[T]]
+    right: Optional[KDNode[T]]
 
-    def __init__(self, point: GeoPt, level: str):
+    def __init__(self, point: T, level: str):
         """
-        Initialiser for the KDNode object.
+        Initialiser for the KDNode[T] object.
         The left and right children are both set to zero
             as this node would be considered as a leaf.
 
         Args:
-            point (GeoPt): point to be represented by the node.
+            point (T): point to be represented by the node.
             level (str): 'x' or 'y'.
         """
         self.point = point
@@ -55,45 +56,45 @@ class KDNode:
         else:
             return XY.X
         
-    def add(self, point: GeoPt) -> None:
+    def add(self, point: T) -> None:
         """
         Adds the point to the node.
         If there is a vacancy, the point will join the tree as a new node.
         Otherwise, the point will be passed on to the relevant child's add method.
 
         Args:
-            point (GeoPt): the point to be added to the node.
+            point (T): the point to be added to the node.
         """
         if getattr(point, self.level) <= getattr(self.point, self.level):
             if self.left == None:
-                self.left = KDNode(point, self.next_level)
+                self.left = KDNode[T](point, self.next_level)
             else:
                 self.left.add(point)
         else:
             if self.right == None:
-                self.right = KDNode(point, self.next_level)
+                self.right = KDNode[T](point, self.next_level)
             else:
                 self.right.add(point)
                 
-    def nearest(self, point: GeoPt) -> Tuple[Optional[GeoPt], float]:
+    def nearest(self, point: T) -> Tuple[Optional[T], float]:
         """
         Gets the nearest point to a particular target point.
 
         Args:
-            point (GeoPt): target point.
+            point (T): target point.
 
         Returns:
-            Tuple[Optional[GeoPt], float]: point-distance tuple.
+            Tuple[Optional[T], float]: point-distance tuple.
         """
-        next_branch:  Optional[KDNode]
-        other_branch: Optional[KDNode]
-        temp: Optional[GeoPt]
+        next_branch:  Optional[KDNode[T]]
+        other_branch: Optional[KDNode[T]]
+        temp: Optional[T]
 
         next_branch, other_branch = self._get_next_other_branch(point)
         temp = self._get_temp_point(next_branch, point)
         return self._backtrack(point, temp, other_branch)
 
-    def _get_next_other_branch(self, point: GeoPt) -> Tuple[Optional[KDNode], Optional[KDNode]]:
+    def _get_next_other_branch(self, point: Pointable) -> Tuple[Optional[KDNode[T]], Optional[KDNode[T]]]:
         """
         There is no guarantee that the deepest node in the tree is the closest point.
         As such, we need to do checks on some sibling nodes we encounter along the way.
@@ -102,46 +103,46 @@ class KDNode:
         For the other branch, we would only need to check its root node.
 
         Args:
-            point (GeoPt): target point.
+            point (Pointable): target point.
 
         Returns:
-            Tuple[Optional[KDNode], Optional[KDNode]]: roots of the two child branches.
+            Tuple[Optional[KDNode[T]], Optional[KDNode[T]]]: roots of the two child branches.
         """
         if getattr(point, self.level) < getattr(self.point, self.level):
             return (self.left, self.right)
         else:
             return (self.right, self.left)
 
-    def _get_temp_point(self, next_branch: Optional[KDNode], point: GeoPt) -> Optional[GeoPt]:
+    def _get_temp_point(self, next_branch: Optional[KDNode[T]], point: T) -> Optional[T]:
         """
         Processes the 'next_branch' to return a node if it exists.
 
         Args:
-            next_branch (Optional[KDNode]): branch to process.
-            point (GeoPt): target point.
+            next_branch (Optional[KDNode[T]]): branch to process.
+            point (T): target point.
 
         Returns:
-            Optional[GeoPt]: a point if it exists.
+            Optional[T]: a point if it exists.
         """
         if next_branch is not None:
             return next_branch.nearest(point)[0]
         else:
-            return GeoPt(float("inf"), float("inf"))
+            return None
 
-    def _backtrack(self, point: GeoPt, temp: Optional[GeoPt], other_branch: Optional[KDNode]) -> Tuple[Optional[GeoPt], float]:
+    def _backtrack(self, point: T, temp: Optional[T], other_branch: Optional[KDNode[T]]) -> Tuple[Optional[T], float]:
         """
         This method computes distances to all the other nodes that we have KIVed.
         The minimum distance is the one that we output.
 
         Args:
-            point (GeoPt): target point.
-            temp (Optional[GeoPt]): current closest point to target.
-            other_branch (Optional[KDNode]): other branch to check for closest point.
+            point (T): target point.
+            temp (Optional[T]): current closest point to target.
+            other_branch (Optional[KDNode[T]]): other branch to check for closest point.
 
         Returns:
-            Tuple[Optional[GeoPt], float]: point-distance tuple.
+            Tuple[Optional[Pointable], float]: point-distance tuple.
         """
-        best:   Optional[GeoPt]
+        best:   Optional[T]
         best_d: float
         s_d:    float
 
@@ -153,17 +154,17 @@ class KDNode:
         
         return (best, best_d)
 
-class KDTree:
+class KDTree(Generic[T]):
     """
-    Encapsulates a KDTree object, containing many KDNodes.
+    Encapsulates a KDTree object, containing many KDNode[T]s.
     At each depth level, we compare alternating coordinates, starting with x.
     
     Fields:
-        root (Optional[KDNode]): the root of the tree.
+        root (Optional[KDNode[T]]): the root of the tree.
         weight (int): the number of nodes in the tree.
         bound (Bound): the bounds that contain the entire collection of points.
     """
-    root: Optional[KDNode]
+    root: Optional[KDNode[T]]
     weight: int
     bound: Bound
 
@@ -183,16 +184,16 @@ class KDTree:
         return f"<KDTree: {self.bound}>"
 
     @property
-    def center(self) -> GeoPt:
+    def center(self) -> T:
         """
         Based on the bounds of the KDTree, return its center point.
 
         Returns:
-            GeoPt: center of the KDTree.
+            T: center of the KDTree.
         """
-        return self.bound.center.as_geo_pt()
+        return self.bound.center
     
-    def add(self, point: GeoPt) -> None:
+    def add(self, point: T) -> None:
         """
         Adds a point to the KDTree.
         It will check whether the root is None (assign root to this new node then).
@@ -200,10 +201,10 @@ class KDTree:
         Weights are also updated.
 
         Args:
-            point (GeoPt): point to be added to the tree.
+            point (T): point to be added to the tree.
         """
         if not self.root:
-            self.root = KDNode(point, XY.X)
+            self.root = KDNode[T](point, XY.X)
             self.weight += 1
             return
         
@@ -211,15 +212,15 @@ class KDTree:
         self.weight += 1
         self.root.add(point)
 
-    def add_all(self, *points: GeoPt) -> None:
+    def add_all(self, *points: T) -> None:
         """
         From a collection of points, add all of them to the tree.
         
         Args:
-            *points (GeoPt): the points to be added to the tree.
+            *points (T): the points to be added to the tree.
         """
         if not self.root:
-            self.root = KDNode(points[0], XY.X)
+            self.root = KDNode[T](points[0], XY.X)
             points = points[1:]
             self.weight += 1
             
@@ -228,43 +229,43 @@ class KDTree:
             self.root.add(point)
             self.weight += 1
 
-    def _remap_min_max(self, point: GeoPt) -> None:
+    def _remap_min_max(self, point: T) -> None:
         """
         Updates the bounds of the KDTree, expanding if a point lies outside of it.
 
         Args:
-            point (GeoPt): point to be added.
+            point (T): point to be added.
         """
         self.bound.min_x = min(self.bound.min_x, point.x)
         self.bound.min_y = min(self.bound.min_y, point.y)
         self.bound.max_x = max(self.bound.max_x, point.x)
         self.bound.max_y = max(self.bound.max_y, point.y)
         
-    def nearest(self, point: GeoPt) -> Tuple[Optional[GeoPt], float]:
+    def nearest(self, point: T) -> Tuple[Optional[T], float]:
         """
         Finds the nearest point to the target.
         The code passes the 'point' argument to the root, and lets the nodes handle it.
         If an answer is unavailable, return (None, float('inf'))
 
         Args:
-            point (GeoPt): point to be queried.
+            point (T): point to be queried.
 
         Returns:
-            Tuple[Optional[GeoPt], float]: point-distance tuple.
+            Tuple[Optional[T], float]: point-distance tuple.
         """
         if self.root == None:
             return (None, float("inf"))
         return self.root.nearest(point)
 
-    def in_order(self) -> List[GeoPt]:
+    def in_order(self) -> List[T]:
         """
         In order traversal of the tree done by recursion.
 
         Returns:
-            List[GeoPt]: a list of points in the tree.
+            List[T]: a list of points in the tree.
         """
-        L: List[GeoPt] = []
-        def in_order_helper(node: Optional[KDNode]) -> None:
+        L: List[T] = []
+        def in_order_helper(node: Optional[KDNode[T]]) -> None:
             if not node:
                 return None
             in_order_helper(node.left)
@@ -273,15 +274,15 @@ class KDTree:
         in_order_helper(self.root)
         return L
 
-    def pre_order(self) -> List[GeoPt]:
+    def pre_order(self) -> List[Pointable]:
         """
         Pre order traversal of the tree done by recursion.
 
         Returns:
-            List[GeoPt]: a list of points in the tree.
+            List[Pointable]: a list of points in the tree.
         """
-        L: List[GeoPt] = []
-        def pre_order_helper(node: Optional[KDNode]) -> None:
+        L: List[Pointable] = []
+        def pre_order_helper(node: Optional[KDNode[T]]) -> None:
             if not node:
                 return None
             L.append(node.point)

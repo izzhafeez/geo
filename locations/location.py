@@ -1,18 +1,20 @@
 from __future__ import annotations
-from ..geometry.elevation import ElevationMap
-from ..geometry.pt import GeoPt
-from ..geometry.shape import Shape
-from ..utils.float import is_float
-from ..structures.kdtree import KDTree
-from ..structures.bound import Bound
-from functools import cached_property
-import numpy as np
-import json
-import requests
-from typing import Tuple, Optional, Dict, List, Any, Callable, Union
-import pandas as pd
-from gsheets import models, Sheets
 from abc import ABC, abstractmethod
+from functools import cached_property
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+import json
+
+from gsheets import models, Sheets
+import numpy as np
+import pandas as pd
+import requests
+
+from geom.elevation import ElevationMap
+from geom.geo_pt import GeoPt
+from geom.shape import Shape
+from structures.bound import Bound
+from structures.kdtree import KDTree
+from utils.float import is_float
 
 class Location(GeoPt, ABC):
     """
@@ -88,6 +90,23 @@ class Location(GeoPt, ABC):
 
         return float(coords["LATITUDE"]), float(coords["LONGITUDE"])
     
+    def _try_setter(self, fields: List[str], items: Dict[str, Any]) -> None:
+        """
+        For each field in the specified fields list,
+            the method will try to assign it to the object.
+        If not possible, then it will just skip it.
+
+        Args:
+            fields (List[str]): list of fields to be included in the object.
+            items (Dict[str, Any]): dictionary containing the fields and values.
+                May not always contain all the fields needed.
+        """
+        for field in fields:
+            if field in items and not pd.isna(items[field]):
+                setattr(self, field, items[field])
+            else:
+                setattr(self, field, None)
+    
     @cached_property
     def elevation(self) -> float:
         """
@@ -115,39 +134,6 @@ class Location(GeoPt, ABC):
             return self.shape.get_nearest(point)[1]
         return super().get_distance(point)
 
-    def _try_setter(self, fields: List[str], items: Dict[str, Any]) -> None:
-        """
-        For each field in the specified fields list,
-            the method will try to assign it to the object.
-        If not possible, then it will just skip it.
-
-        Args:
-            fields (List[str]): list of fields to be included in the object.
-            items (Dict[str, Any]): dictionary containing the fields and values.
-                May not always contain all the fields needed.
-        """
-        for field in fields:
-            if field in items and not pd.isna(items[field]):
-                setattr(self, field, items[field])
-            else:
-                setattr(self, field, None)
-
-    def map_nearest(self, name: str, locations: Locations) -> Tuple[Optional[GeoPt], float]:
-        """
-        From a set of locations, get the nearest one to this location.
-
-        Args:
-            name (str): name to assign to this group of locations (malls etc.)
-            locations (Locations): collection of locations to search from.
-
-        Returns:
-            Tuple[GeoPt, float]: pair of point and distance to point.
-        """
-        nearest_point, nearest_distance = locations.get_nearest_to(self)
-        self._nearest[name] = (nearest_point, nearest_distance) if nearest_point else (None, float("inf"))
-        setattr(self, "nearest_"+name, self._nearest[name])
-        return self._nearest[name]
-
     def nearest(self, name: str) -> Tuple[Optional[GeoPt], float]:
         """
         If already generated, returns the nearest location in that group,
@@ -166,18 +152,6 @@ class Location(GeoPt, ABC):
             return (None, float("inf"))
         return self._nearest[name]
 
-    def nearest_location(self, name: str) -> Optional[GeoPt]:
-        """
-        Gets the point from the point-distance pair.
-
-        Args:
-            name (str): group of locations to be queried.
-
-        Returns:
-            Optional[GeoPt]: nearest point to location.
-        """
-        return self.nearest(name)[0]
-
     def nearest_distance(self, name: str) -> float:
         """
         Gets the distance from the point-distance pair.
@@ -190,6 +164,34 @@ class Location(GeoPt, ABC):
         """
         return self.nearest(name)[1]
 
+    def nearest_location(self, name: str) -> Optional[GeoPt]:
+        """
+        Gets the point from the point-distance pair.
+
+        Args:
+            name (str): group of locations to be queried.
+
+        Returns:
+            Optional[GeoPt]: nearest point to location.
+        """
+        return self.nearest(name)[0]
+
+    def map_nearest(self, name: str, locations: Locations) -> Tuple[Optional[GeoPt], float]:
+        """
+        From a set of locations, get the nearest one to this location.
+
+        Args:
+            name (str): name to assign to this group of locations (malls etc.)
+            locations (Locations): collection of locations to search from.
+
+        Returns:
+            Tuple[GeoPt, float]: pair of point and distance to point.
+        """
+        nearest_point, nearest_distance = locations.get_nearest_to(self)
+        self._nearest[name] = (nearest_point, nearest_distance) if nearest_point else (None, float("inf"))
+        setattr(self, "nearest_"+name, self._nearest[name])
+        return self._nearest[name]
+
 class Locations(ABC):
     """
     Object encapsulating a collection of locations.
@@ -197,13 +199,13 @@ class Locations(ABC):
     Enables filtering, sorting regex searching of locations.
 
     Fields:
-        locations_kdtree (KDTree): KDTree representing the locations.
+        locations_kdtree (KDTree[Dict]): KDTree representing the locations.
             This reduces the expected time complexity of searching nearest points to O(logN).
         locations (Dict[str, Location]): dictionary storing the locations of the group,
             indexed by name to make it easier to access them.
         name (str): the name assigned to this group of locations.
     """
-    locations_kdtree: KDTree
+    locations_kdtree: KDTree[GeoPt]
     locations:        Dict[str, Location]
     name:             str
 
@@ -217,7 +219,7 @@ class Locations(ABC):
             name (str): name to assign to the group of locations.
         """
         self.name = name
-        self.locations_kdtree = KDTree()
+        self.locations_kdtree = KDTree[GeoPt]()
         self.locations = {}
         for location in locations:
             self.locations_kdtree.add(location)
@@ -311,23 +313,30 @@ class Locations(ABC):
             Locations: group of locations in the final set.
         """
         pass
-
-    @staticmethod
-    def get_sheet(name: str) -> pd.DataFrame:
+    
+    def filter(self,
+               location_filter: Callable[[Location], bool]=lambda location: True,
+               name: str="") -> Locations:
         """
-        Extracts data from Google Sheets, given the name of the sheet.
+        Filters out locations based on certain criteria (lambda function).
+        Returns another Locations object containing these new locations.
+        Filters can be chained together like in locations.filter(f1).filter(f2)
+        For example, lambda location: location.lat > 1.38.
 
         Args:
-            name (str): name of the sheet to be downloaded.
+            location_filter (Callable, optional): lambda function to determine whether a locations passes the filter.
+                Defaults to lambda location:True.
+            name (str, optional): optional name to be given to this subset of locations. Defaults to "".
 
         Returns:
-            pd.DataFrame: data extracted from Google Sheets.
+            Locations: subset of the original locations.
         """
-        sheets: Union[models.SpreadSheet, List[object]] = Sheets.from_files('client_secrets.json','~/storage.json')[Locations._SHEET_ID]
-        return sheets.find(name).to_frame() if isinstance(sheets, models.SpreadSheet) else pd.DataFrame()
-        
-
-    def get_with_regex(self, search_term: str="") -> Dict[str, Location]:
+        name_to_use = self.name if name == "" else name
+        filtered_locations = list(filter(location_filter, self.locations.values()))
+        locations = type(self)(*filtered_locations, name=name_to_use)
+        return locations
+    
+    def get_by_regex(self, search_term: str="") -> Dict[str, Location]:
         """
         Gets locations whose names match the regex pattern.
 
@@ -352,7 +361,21 @@ class Locations(ABC):
             Tuple[GeoPt, float]: point-distance pair.
         """
         nearest_point, distance = self.locations_kdtree.nearest(point)
-        return (nearest_point.as_geo_pt(), distance) if nearest_point else (None, float("inf"))
+        return (nearest_point, distance) if nearest_point else (None, float("inf"))
+    
+    @staticmethod
+    def get_sheet(name: str) -> pd.DataFrame:
+        """
+        Extracts data from Google Sheets, given the name of the sheet.
+
+        Args:
+            name (str): name of the sheet to be downloaded.
+
+        Returns:
+            pd.DataFrame: data extracted from Google Sheets.
+        """
+        sheets: Union[models.SpreadSheet, List[object]] = Sheets.from_files('client_secrets.json','~/storage.json')[Locations._SHEET_ID]
+        return sheets.find(name).to_frame() if isinstance(sheets, models.SpreadSheet) else pd.DataFrame()
 
     def map_nearest_to(self, locations: Locations) -> List[Tuple[str, Tuple[Location, float]]]:
         """
@@ -370,28 +393,6 @@ class Locations(ABC):
             location.map_nearest(locations.name, locations)
             to_return.append((name, location.nearest(locations.name)))
         return to_return
-
-    def filter(self,
-               location_filter: Callable[[Location], bool]=lambda location: True,
-               name: str="") -> Locations:
-        """
-        Filters out locations based on certain criteria (lambda function).
-        Returns another Locations object containing these new locations.
-        Filters can be chained together like in locations.filter(f1).filter(f2)
-        For example, lambda location: location.lat > 1.38.
-
-        Args:
-            location_filter (Callable, optional): lambda function to determine whether a locations passes the filter.
-                Defaults to lambda location:True.
-            name (str, optional): optional name to be given to this subset of locations. Defaults to "".
-
-        Returns:
-            Locations: subset of the original locations.
-        """
-        name_to_use = self.name if name == "" else name
-        filtered_locations = list(filter(location_filter, self.locations.values()))
-        locations = type(self)(*filtered_locations, name=name_to_use)
-        return locations
 
     def show(self, attr: str="name") -> Dict[str, Any]:
         """
