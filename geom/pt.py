@@ -3,8 +3,9 @@ from typing import List, Optional, Tuple
 
 import shapely.geometry
 
-from geometry.pointable import Pointable
-import geometry.geo_pt
+from geom.pointable import Pointable
+from structures.bound import Bound
+import geom.geo_pt
 
 class Pt(shapely.geometry.Point, Pointable):
     """
@@ -40,6 +41,10 @@ class Pt(shapely.geometry.Point, Pointable):
         return self.y
 
     @staticmethod
+    def from_bound(bound: Bound[Pt]) -> Pt:
+        return Pt((bound.max_x+bound.min_x)/2, (bound.max_y+bound.min_y)/2)
+
+    @staticmethod
     def from_point(point: shapely.geometry.Point) -> Pt:
         """
         Factory method that converts a geometry.Point object into a Pt object.
@@ -52,14 +57,32 @@ class Pt(shapely.geometry.Point, Pointable):
         """
         return Pt(point.x, point.y)
 
-    def as_geo_pt(self) -> geometry.geo_pt.GeoPt:
+    def as_geo_pt(self) -> geom.geo_pt.GeoPt:
         """
         Converts the Pt into a GeoPt object.
 
         Returns:
             GeoPt: the converted point.
         """
-        return geometry.geo_pt.GeoPt(self.y, self.x)
+        return geom.geo_pt.GeoPt(self.y, self.x)
+
+    def coords_as_tuple_xy(self) -> Tuple[float, float]:
+        """
+        Converts the point into an x-y tuple
+
+        Returns:
+            Tuple[float, float]: x-y coordinate tuple.
+        """
+        return (self.x, self.y)
+
+    def coords_as_tuple_yx(self) -> Tuple[float, float]:
+        """
+        Converts the point into a y-x tuple
+
+        Returns:
+            Tuple[float, float]: y-x coordinate tuple.
+        """
+        return (self.y, self.x)
 
     def get_distance(self, point: Pt) -> float:
         """
@@ -75,7 +98,7 @@ class Pt(shapely.geometry.Point, Pointable):
         Returns:
             float: distance, in units, to the target point.
         """
-        if isinstance(point, geometry.geo_pt.GeoPt):
+        if isinstance(point, Pt):
             raise TypeError("Cannot be GeoPt!")
         return ((self.y-point.y)**2+(self.x-point.x)**2)**0.5
     
@@ -98,20 +121,5 @@ class Pt(shapely.geometry.Point, Pointable):
                 nearest_point = point
         return (nearest_point, nearest_dist)
 
-    def coords_as_tuple_xy(self) -> Tuple[float, float]:
-        """
-        Converts the point into an x-y tuple
-
-        Returns:
-            Tuple[float, float]: x-y coordinate tuple.
-        """
-        return (self.x, self.y)
-
-    def coords_as_tuple_yx(self) -> Tuple[float, float]:
-        """
-        Converts the point into a y-x tuple
-
-        Returns:
-            Tuple[float, float]: y-x coordinate tuple.
-        """
-        return (self.y, self.x)
+    def move_to(self, new_x: float, new_y: float) -> Pt:
+        return Pt(new_x, new_y)

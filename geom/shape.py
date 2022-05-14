@@ -17,7 +17,7 @@ class Shape(geometry.polygon.Polygon):
     Fields:
         points: a KDTree full of points representing the Shape.
     """
-    points: KDTree = KDTree()
+    points: KDTree[GeoPt]
 
     def __init__(self, points: List[GeoPt]):
         """
@@ -26,14 +26,20 @@ class Shape(geometry.polygon.Polygon):
         Args:
             points (List[GeoPt]): ordered list of points to be included in the shape.
         """
+        self.points = KDTree[GeoPt]()
         super().__init__(points)
         if isinstance(points, list):
             self.points.add_all(*points)
 
-    # def from_polygon(self, polygon: geometry.polygon.Polygon) -> Shape:
-    #     return Shape([GeoPt(coord[1], coord[0]) for coord in polygon.exterior.coords])
+    @staticmethod
+    def from_polygon(polygon: Optional[geometry.polygon.Polygon]) -> Optional[Shape]:
+        if not polygon:
+            return None
+        if polygon.exterior:
+            return Shape([GeoPt(coords[1], coords[0]) for coords in polygon.exterior.coords])
+        return None
         
-    def get_nearest(self, point: GeoPt) -> Tuple[Optional[GeoPt], float]:
+    def get_nearest(self, point: GeoPt, simple: bool=False) -> Tuple[Optional[GeoPt], float]:
         """
         Gets the nearest point of the Shape to the target.
         Returns 0 if the point is contained within the Shape.
@@ -44,13 +50,16 @@ class Shape(geometry.polygon.Polygon):
         Returns:
             Tuple[Optional[GeoPt], float]: point-distance pair.
         """
+        if simple:
+            return (self.center, self.center.get_distance(point))
         if not self.points:
             nearest_point: GeoPt = Pt.from_point(nearest_points(self, point)[0]).as_geo_pt()
             return (nearest_point, point.get_distance(nearest_point))
         if self.contains(point):
-            return (self.points.center.as_geo_pt(), 0)
+            xy = self.points.center
+            return (GeoPt(lat=xy[1], lon=xy[0]), 0)
         nearest = self.points.nearest(point)
-        return (nearest[0].as_geo_pt(), nearest[1]) if nearest[0] else (None, float("inf"))
+        return (nearest[0], nearest[1]) if nearest[0] else (None, float("inf"))
 
     def get_bounds(self) -> Bound:
         return self.points.bound
@@ -66,5 +75,6 @@ class Shape(geometry.polygon.Polygon):
             GeoPt: center of the shape.
         """
         if self.points:
-            return self.points.center.as_geo_pt()
+            xy = self.points.center
+            return GeoPt(xy[1], xy[0])
         return Pt(self.centroid.coords.x, self.centroid.coords.y).as_geo_pt()

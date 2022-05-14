@@ -10,22 +10,22 @@ class Node(Generic[T]):
     Encapsulates a Node of the AVLTree.
     
     Fields:
-        val (U): the value to be assigned to the node.
+        key (U): the value to be assigned to the node.
         left (Optional[Node[T]]): the left child of the node.
         right (Optional[Node[T]]): the right child of the node.
         height (int): the height of the tree rooted at the node.
         count (int): duplicate values are captured here, so we can have nodes with >1 counts.
         weight (int): the number of nodes on the tree rooted at the node.
     """
-    val:    T
+    key:    T
     left:   Optional[Node[T]]
     right:  Optional[Node[T]]
     height: int
     count:  int
     weight: int
 
-    def __init__(self, val: T):
-        self.val = val
+    def __init__(self, key: T):
+        self.key = key
         self.left = None
         self.right = None
         self.height = 1
@@ -56,9 +56,9 @@ class AVLTree(Generic[T]):
         def insert_helper(node: Optional[Node[T]], key: T) -> Optional[Node[T]]:
             if not node:
                 return Node[T](key)
-            elif key < node.val:
+            elif key < node.key:
                 node.left = insert_helper(node.left, key)
-            elif key > node.val:
+            elif key > node.key:
                 node.right = insert_helper(node.right, key)
             else:
                 node.count += 1
@@ -67,17 +67,17 @@ class AVLTree(Generic[T]):
             
             balance = self.get_balance(node)
             
-            left_val = self.get_val(node.left)
-            right_val = self.get_val(node.right)
+            left_key = self.get_key(node.left)
+            right_key = self.get_key(node.right)
 
-            if balance > 1 and key < left_val:
+            if balance > 1 and key < left_key:
                 return self.right_rotate(node)
-            if balance < -1 and right_val and key > right_val:
+            if balance < -1 and right_key and key > right_key:
                 return self.left_rotate(node)
-            if balance > 1 and left_val and key > left_val:
+            if balance > 1 and left_key and key > left_key:
                 node.left = self.left_rotate(node.left)
                 return self.right_rotate(node)
-            if balance < -1 and key < right_val:
+            if balance < -1 and key < right_key:
                 node.right = self.right_rotate(node.right)
                 return self.left_rotate(node)
 
@@ -96,9 +96,9 @@ class AVLTree(Generic[T]):
         def delete_helper(node: Optional[Node[T]], key: T) -> Optional[Node[T]]:
             if not node:
                 return None
-            elif key < node.val:
+            elif key < node.key:
                 node.left = delete_helper(node.left, key)
-            elif key > node.val:
+            elif key > node.key:
                 node.right = delete_helper(node.right, key)
             elif node.count > 1:
                 node.count -= 1
@@ -112,9 +112,9 @@ class AVLTree(Generic[T]):
                     node = None
                     return temp
                 temp = self.get_min_value_node(node.right)
-                node.val = temp.val
+                node.key = temp.key
                 node.count = temp.count
-                node.right = delete_helper(node.right, temp.val)
+                node.right = delete_helper(node.right, temp.key)
             if not node:
                 return node
             self.set_height(node)
@@ -181,10 +181,10 @@ class AVLTree(Generic[T]):
         self.set_weight(left)
         return left
     
-    def get_val(self, node: Optional[Node[T]]) -> Optional[T]:
+    def get_key(self, node: Optional[Node[T]]) -> Optional[T]:
         if not node:
             return None
-        return node.val
+        return node.key
  
     def get_height(self, node: Optional[Node[T]]) -> int:
         if not node:
@@ -218,7 +218,7 @@ class AVLTree(Generic[T]):
             if not node:
                 return None
             elif not node.left:
-                return node.val
+                return node.key
             return get_min_value_helper(node.left)
         return get_min_value_helper(self.root)
     
@@ -236,35 +236,35 @@ class AVLTree(Generic[T]):
             return node
         return self.get_min_value_node(node.left)
 
-    def in_order(self) -> List[Any]:
+    def in_order(self) -> List[T]:
         """
         In order traversal of the tree done by recursion.
 
         Returns:
-            List[Any]: a list of values in the tree.
+            List[T]: a list of keys in the tree in ascending order.
         """
         L = []
         def in_order_helper(node: Optional[Node[T]]) -> None:
             if not node:
                 return
             in_order_helper(node.left)
-            L.append(node.val)
+            L.append(node.key)
             in_order_helper(node.right)
         in_order_helper(self.root)
         return L
     
-    def pre_order(self) -> List[Tuple[T, T, T]]:
+    def pre_order(self) -> List[T]:
         """
         Pre order traversal of the tree done by recursion.
 
         Returns:
-            List[Tuple[T, T, T]]: a list of parent-leftchild-rightchild tuples.
+            List[T]: a list of keys in the tree in pre order.
         """
         L = []
         def pre_order_helper(node: Optional[Node[T]]) -> None:
             if not node:
                 return
-            L.append((self.get_val(node), self.get_val(node.left), self.get_val(node.right)))
+            L.append(node.key)
             pre_order_helper(node.left)
             pre_order_helper(node.right)
         pre_order_helper(self.root)
@@ -284,9 +284,9 @@ class AVLTree(Generic[T]):
         def rank_helper(node: Optional[Node[T]], key: T) -> int:
             if not node:
                 return 0
-            elif key < node.val:
+            elif key < node.key:
                 return rank_helper(node.left, key)
-            elif key > node.val:
+            elif key > node.key:
                 return self.get_weight(node) - self.get_weight(node.right) + rank_helper(node.right, key)
             return self.get_weight(node.left)
         return rank_helper(self.root, key) + 1

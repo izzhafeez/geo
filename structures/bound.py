@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Generic, get_args, TypeVar
+from typing import Generic, get_args, Tuple, TypeVar
 
 import shapely.geometry
 
@@ -31,7 +31,7 @@ class Bound(Generic[T]):
     def __str__(self) -> str:
         return f"x({self.min_x}, {self.max_x}), y({self.min_y}, {self.max_y})"
     
-    def merge_with(self, bound: Bound) -> None:
+    def merge_with(self, bound: Bound[T]) -> None:
         """
         Merges two bounds together, such that the new bound contains both bounds.
 
@@ -42,6 +42,10 @@ class Bound(Generic[T]):
         self.max_x = max(self.max_x, bound.max_x)
         self.min_y = min(self.min_y, bound.min_y)
         self.max_y = max(self.max_y, bound.max_y)
+        
+    @property
+    def center(self) -> Tuple[float, float]:
+        return ((self.max_x+self.min_x)/2, (self.max_y+self.min_y)/2)
     
     def contains(self, point: T) -> bool:
         """
@@ -58,16 +62,6 @@ class Bound(Generic[T]):
                 and point.y >= self.min_y
                 and point.y <= self.max_y)
 
-    @property
-    def center(self) -> T:
-        """
-        Get the center point of the bound.
-
-        Returns:
-            T: center point of the bound.
-        """
-        return get_args(T)[0]((self.max_x+self.min_x)/2, (self.max_y+self.min_y)/2)
-
     @staticmethod
     def get_bound_from_shape(shape: shapely.geometry.polygon.Polygon) -> Bound:
         """
@@ -79,9 +73,9 @@ class Bound(Generic[T]):
         Returns:
             Bound: the bounds of the shape.
         """
-        return Bound(shape.bounds[0],
-                     shape.bounds[2],
-                     shape.bounds[1],
-                     shape.bounds[3])
+        return Bound[T](shape.bounds[0],
+                        shape.bounds[2],
+                        shape.bounds[1],
+                        shape.bounds[3])
 
     

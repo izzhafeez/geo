@@ -3,9 +3,10 @@ from typing import Optional, Tuple
 
 import shapely.geometry
 
-from geometry.distance import DistanceCalculator
-from geometry.pointable import Pointable
-import geometry.pt
+from geom.distance import DistanceCalculator
+from geom.pointable import Pointable
+from structures.bound import Bound
+import geom.pt
 
 class GeoPt(shapely.geometry.Point, Pointable):
     """
@@ -45,6 +46,10 @@ class GeoPt(shapely.geometry.Point, Pointable):
         return self.lat
     
     @staticmethod
+    def from_bound(bound: Bound[GeoPt]) -> GeoPt:
+        return GeoPt((bound.max_y+bound.min_y)/2, (bound.max_x+bound.min_x)/2)
+    
+    @staticmethod
     def from_point(point: shapely.geometry.Point) -> GeoPt:
         """
         Factory method that converts a geometry.Point object into a GeoPt object.
@@ -57,14 +62,23 @@ class GeoPt(shapely.geometry.Point, Pointable):
         """
         return GeoPt(point.y, point.x)
     
-    def as_pt(self) -> geometry.pt.Pt:
+    def as_pt(self) -> geom.pt.Pt:
         """
         Converts the GeoPt into a Pt object.
 
         Returns:
             Pt: the returned Pt.
         """
-        return geometry.pt.Pt(self.x, self.y)
+        return geom.pt.Pt(self.x, self.y)
+    
+    def coords_as_tuple_latlong(self) -> Tuple[float, float]:
+        """
+        Converts the point into a lat-long coordinate tuple.
+
+        Returns:
+            Tuple[float, float]: lat-long coordinate tuple.
+        """
+        return (self.lat, self.lon)
     
     def get_distance(self, point: GeoPt) -> float:
         """
@@ -80,7 +94,7 @@ class GeoPt(shapely.geometry.Point, Pointable):
         Returns:
             float: distance, in metres, to the target point.
         """
-        if isinstance(point, geometry.pt.Pt):
+        if isinstance(point, GeoPt):
             return DistanceCalculator.get_distance(self, point)
         raise TypeError("Must be a GeoPt!")
         
@@ -96,14 +110,14 @@ class GeoPt(shapely.geometry.Point, Pointable):
         Returns:
             float: approximate distance, in units.
         """
-        return ((self.y-point.y)**2+(self.x-point.x)**2)**0.5
+        return 10000*((self.y-point.y)**2+(self.x-point.x)**2)**0.5
     
-    def get_closest_point(self, *points: GeoPt) -> Tuple[Optional[GeoPt], float]:
+    def get_closest_point(self, *points: Optional[GeoPt]) -> Tuple[Optional[GeoPt], float]:
         """
         Based on a collection of points, find the nearest to self.
         
         Args:
-            *points (GeoPt): we will find the closest of these points to self.
+            *points (Optional[GeoPt]): we will find the closest of these points to self.
 
         Returns:
             Tuple[Optional[GeoPt], float]: point-distance tuple.
@@ -111,19 +125,14 @@ class GeoPt(shapely.geometry.Point, Pointable):
         nearest_point = None
         nearest_dist = float("inf")
         for point in points:
-            dist = self.get_distance_basic(point)
-            if nearest_dist > dist:
-                nearest_dist = dist
-                nearest_point = point
+            if point is not None:
+                dist = self.get_distance_basic(point)
+                if nearest_dist > dist:
+                    nearest_dist = dist
+                    nearest_point = point
         if not nearest_point:
             return (None, nearest_dist)
         return (nearest_point, self.get_distance(nearest_point))
-
-    def coords_as_tuple_latlong(self) -> Tuple[float, float]:
-        """
-        Converts the point into a lat-long coordinate tuple.
-
-        Returns:
-            Tuple[float, float]: lat-long coordinate tuple.
-        """
-        return (self.lat, self.lon)
+    
+    def move_to(self, new_x: float, new_y: float) -> GeoPt:
+        return GeoPt(new_y, new_x)

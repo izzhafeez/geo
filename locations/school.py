@@ -2,8 +2,11 @@ from __future__ import annotations
 from os.path import dirname, join
 from typing import Any, Callable, Dict, List, Optional
 
+from shapely.geometry import Polygon
 import pandas as pd
+import pickle
 
+from geom.shape import Shape
 from .location import Location, Locations
 
 class School(Location):
@@ -52,6 +55,7 @@ class Schools(Locations):
         "Level": "level",
         "Opening Year": "opening_year",
         "Type": "gender",
+        "shape": "shape",
     }
 
     def __init__(self, *schools: School, name="school"):
@@ -85,8 +89,12 @@ class Schools(Locations):
     @staticmethod
     def _get_data_compiling(data_dict: List[Dict[str, Any]]) -> List[School]:
         schools: List[School] = []
+        with open(join(dirname(__file__), "assets/school_shapes.pickle"), 'rb') as f:
+            school_shapes_dict: Dict[str, Polygon] = pickle.load(f)
         for school_info in data_dict:
             name = school_info["Name"]
+            shape = Shape.from_polygon(school_shapes_dict.get(name))
+            school_info["shape"] = shape
             info = Schools._field_map(school_info)
             level = info["level"]
             if level == "Primary":

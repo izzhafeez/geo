@@ -3,6 +3,7 @@ from functools import cached_property
 from typing import List, Generic, Optional, Tuple, TypeVar
 
 from .bound import Bound
+from .quick_sort import median_with_left_right
 from geom.pointable import Pointable
 
 T = TypeVar("T", bound=Pointable)
@@ -146,12 +147,13 @@ class KDNode(Generic[T]):
         best_d: float
         s_d:    float
 
-        best, best_d = point.get_closest_point(temp, self.point) if temp else (None, float("inf"))
+        best, best_d = point.get_closest_point(*[temp, self.point])
         s_d = abs(getattr(point, self.level) - getattr(self.point, self.level))
+
         if best_d >= s_d and other_branch is not None:
             temp = other_branch.nearest(point)[0]
-            best, best_d = point.get_closest_point(temp, best) if temp and best else (None, float("inf"))
-        
+            best, best_d = point.get_closest_point(*[temp, best])# if temp and best else (None, float("inf"))
+
         return (best, best_d)
 
 class KDTree(Generic[T]):
@@ -166,7 +168,7 @@ class KDTree(Generic[T]):
     """
     root: Optional[KDNode[T]]
     weight: int
-    bound: Bound
+    bound: Bound[T]
 
     def __init__(self):
         """
@@ -184,7 +186,7 @@ class KDTree(Generic[T]):
         return f"<KDTree: {self.bound}>"
 
     @property
-    def center(self) -> T:
+    def center(self) -> Tuple[float, float]:
         """
         Based on the bounds of the KDTree, return its center point.
 
@@ -192,39 +194,37 @@ class KDTree(Generic[T]):
             T: center of the KDTree.
         """
         return self.bound.center
-    
-    def add(self, point: T) -> None:
-        """
-        Adds a point to the KDTree.
-        It will check whether the root is None (assign root to this new node then).
-        If not None, then the point will be added to the tree's root, and passed along there.
-        Weights are also updated.
-
-        Args:
-            point (T): point to be added to the tree.
-        """
-        if not self.root:
-            self.root = KDNode[T](point, XY.X)
-            self.weight += 1
-            return
-        
-        self._remap_min_max(point)
-        self.weight += 1
-        self.root.add(point)
 
     def add_all(self, *points: T) -> None:
         """
         From a collection of points, add all of them to the tree.
+        It will check whether the root is None (assign root to this new node then).
+        If not None, then the point will be added to the tree's root, and passed along there.
+        Weights are also updated.
         
         Args:
             *points (T): the points to be added to the tree.
         """
+        sorted_points: List[T] = []
+        def append_median(_list: List[T], xy: str) -> None:
+            if len(_list) == 0:
+                return
+            left, mid, right = median_with_left_right(_list, comparator=lambda point: getattr(point, xy))
+            if mid is not None:
+                sorted_points.append(mid)
+            if xy == "x":
+                append_median(left, "y")
+                append_median(right, "y")
+            else:
+                append_median(left, "x")
+                append_median(right, "x")
+        append_median(list(points), "x")
+        
         if not self.root:
-            self.root = KDNode[T](points[0], XY.X)
-            points = points[1:]
+            self.root = KDNode[T](sorted_points.pop(0), "x")
             self.weight += 1
             
-        for point in points:
+        for point in sorted_points:
             self._remap_min_max(point)
             self.root.add(point)
             self.weight += 1

@@ -1,9 +1,12 @@
 from __future__ import annotations
 from os.path import dirname, join
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from shapely.geometry import Polygon
 import pandas as pd
+import pickle
 
+from geom.shape import Shape
 from .location import Location, Locations
 
 class Mall(Location):
@@ -24,7 +27,7 @@ class Mall(Location):
     retail_area: Optional[float]
 
     def __init__(self, name: str, **kwargs):
-        fields = ["lat", "lon", "shape", "floors", "stores", "opening_year", "retail_area"]
+        fields = ["lat", "lon", "shape", "floors", "stores", "opening_year", "retail_area", "planning_area"]
         self._try_setter(fields, kwargs)
         super().__init__(name, lat=self.lat, lon=self.lon, shape=self.shape)
 
@@ -35,7 +38,8 @@ class Malls(Locations):
         "Floors": "floors",
         "Stores": "stores",
         "Opening year": "opening_year",
-        "Area": "retail_area"
+        "Area": "retail_area",
+        "shape": "shape",
     }
 
     def __init__(self, *malls: Mall, name: str="mall"):
@@ -68,13 +72,16 @@ class Malls(Locations):
     @staticmethod
     def _get_data_compiling(data_dict: Dict[str, Any]) -> List[Mall]:
         malls: List[Mall] = []
+        with open(join(dirname(__file__), "assets/mall_shapes.pickle"), 'rb') as f:
+            mall_shapes_dict: Dict[str, Polygon] = pickle.load(f)
         for name, info in data_dict.items():
+            shape = Shape.from_polygon(mall_shapes_dict.get(name))
+            info["shape"] = shape
             malls.append(Mall(name, **Malls._field_map(info)))
         return malls
 
     @staticmethod
     def _field_map(d: Dict[str, Any]) -> Dict[str, Any]:
         for old_field, new_field in Malls._FIELD_MAP.items():
-            d[new_field] = d[old_field]
-            d.pop(old_field)
+            d[new_field] = d.pop(old_field)
         return d

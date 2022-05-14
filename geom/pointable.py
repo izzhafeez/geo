@@ -13,4 +13,8 @@ class Pointable(ABC):
     @abstractmethod
     def get_closest_point(self, *points: Pointable) -> Tuple[Optional[Pointable], float]:
         pass
+    
+    @abstractmethod
+    def move_to(self, new_x: float, new_y: float) -> Pointable:
+        pass
         

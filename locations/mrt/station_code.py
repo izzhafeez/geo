@@ -4,8 +4,9 @@ from functools import cached_property
 from typing import Dict, Optional, Set, Tuple
 import re
 
-@dataclass
-class StationCode(frozen=True):
+from .mrt_line import MRTLine, MRTLines
+
+class StationCode:
     code: str
     
     _lower_terminuses: Set[str] = {"EW1", "CG0",
@@ -30,12 +31,35 @@ class StationCode(frozen=True):
                                                "TE22": ("TE21", "TE22A"),
                                                "TE23": ("TE22A", "TE24"),
                                                "TE22A": ("TE22", "TE23"),}
+    _line_mapping: Dict[str, str] = {"BP": "LRT",
+                                     "SE": "LRT",
+                                     "SW": "LRT",
+                                     "PE": "LRT",
+                                     "PW": "LRT",
+                                     "CP": "CR",
+                                     "CE": "CC",
+                                     "JW": "JR",
+                                     "JE": "JR",
+                                     "JS": "JR",
+                                     "CG": "EW",}
+    
+    def __init__(self, code: str):
+        self.code = code
     
     def __eq__(self, other: StationCode) -> bool:
         return self.code == other.code
     
     def __lt__(self, other: StationCode) -> bool:
         return self.number < other.number
+    
+    def __hash__(self) -> int:
+        return hash(self.code)
+    
+    def __str__(self) -> str:
+        return f"<StationCode: {self.code}>"
+
+    def __repr__(self) -> str:
+        return f"<StationCode: {self.code}>"
     
     @cached_property
     def prefix(self) -> str:
@@ -46,7 +70,7 @@ class StationCode(frozen=True):
         regex_search_result = re.findall(r"\d+", self.code)
         if len(regex_search_result) == 0:
             return 0
-        return regex_search_result[0]
+        return int(regex_search_result[0])
     
     @cached_property
     def suffix(self) -> Optional[str]:
@@ -79,3 +103,14 @@ class StationCode(frozen=True):
             return StationCode(StationCode._exceptions[self.code][0])
         return StationCode(self.prefix + str(self.number - 1))
         
+    @cached_property
+    def line(self) -> MRTLine:
+        if self.prefix in StationCode._line_mapping:
+            new_prefix = StationCode._line_mapping[self.prefix]
+            line = MRTLines.get(new_prefix)
+            if line is not None:
+                return line
+        line = MRTLines.get(self.prefix)
+        if line is not None:
+            return line
+        raise ValueError(self.prefix)

@@ -8,7 +8,7 @@ import pandas as pd
 
 from .location import Location, Locations
 from geom.geo_pt import GeoPt
-from structures.interval2d import IntervalTree
+from structures.bounds_tree import BoundsTree
 
 class PlanningArea(Location):
     """
@@ -29,19 +29,20 @@ class PlanningArea(Location):
         super().__init__(name, lat=self.lat, lon=self.lon, shape=self.shape)
 
 class PlanningAreas(Locations):
-    locations_interval_tree: IntervalTree[PlanningArea]
+    interval_tree: BoundsTree[PlanningArea]
     _FIELD_MAP = {
         "geometry": "shape",
         "SubzoneCode": "code",
         "Planning": "planning_area",
         "Region": "region",
     }
-    _PATH_TO_PLANNING_AREAS = join(dirname(__file__), "assets/Subzone_Census2010.kml")
+    # https://data.gov.sg/dataset/master-plan-2019-subzone-boundary-no-sea
+    _PATH_TO_PLANNING_AREAS = join(dirname(__file__), "assets/master-plan-2019-subzone-boundary-no-sea-kml.kml")
 
     def __init__(self, *areas: PlanningArea, name="planning_area"):
-        self.locations_interval_tree = IntervalTree[PlanningArea]()
+        self.interval_tree = BoundsTree[PlanningArea]()
         super().__init__(*areas, name=name)
-        self.locations_interval_tree.add_all([area.shape for area in areas if area.shape], [area for area in areas if area])
+        self.interval_tree.add_all([area.shape for area in areas if area.shape], [area for area in areas if area])
 
     @staticmethod
     def get(blanks=False, offline=True) -> PlanningAreas:
@@ -52,18 +53,21 @@ class PlanningAreas(Locations):
 
     @staticmethod
     def _get_data_handler(offline: bool) -> pd.DataFrame:
-        gpd.io.file.fiona.drvsupport.supported_drivers["KML"] = "rw"
+        gpd.io.file.fiona.drvsupport.supported_drivers["KML"] = "rw" # type: ignore [no-redef]
         return gpd.read_file(PlanningAreas._PATH_TO_PLANNING_AREAS, driver='KML')
 
     @staticmethod
     def _get_data_cleaning(blanks: bool) -> Callable[[pd.DataFrame], List[Dict[str, Any]]]:
         def clean_data(df: pd.DataFrame) -> List[Dict[str, Any]]:
             extract_from_description = lambda pattern: df.Description.str.extract(pattern)
-            df["SubzoneCode"] = extract_from_description("Subzone Code.*?<td>(.*?)</td>")
-            df["Planning"]    = extract_from_description("Planning Area Name.*?<td>(.*?)</td>")
-            df["Region"]      = extract_from_description("Region Name.*?<td>(.*?)</td>")
+            # df["SubzoneCode"] = extract_from_description("Subzone Code.*?<td>(.*?)</td>")
+            # df["Planning"]    = extract_from_description("Planning Area Name.*?<td>(.*?)</td>")
+            # df["Region"]      = extract_from_description("Region Name.*?<td>(.*?)</td>")
+            df["Name"]        = extract_from_description("SUBZONE_N</th> <td>(.*?)</td>")
+            df["SubzoneCode"] = extract_from_description("SUBZOME_C</th> <td>(.*?)</td>")
+            df["Planning"]    = extract_from_description("PLN_AREA_N</th> <td>(.*?)</td>")
+            df["Region"]      = extract_from_description("REGION_N</th> <td>(.*?)</td>")
             df = df.drop("Description",axis=1)
-            # df["bounds"] = df.geometry.apply(lambda x: x.bounds)
             df = df[["Name", "SubzoneCode", "Planning", "Region", "geometry"]]
             return df.to_dict("records")
         return clean_data
@@ -84,5 +88,5 @@ class PlanningAreas(Locations):
         return d
 
     def get_nearest_to(self, point: GeoPt) -> Tuple[Optional[PlanningArea], float]:
-        return (self.locations_interval_tree.find_shape(point), 0)
+        return (self.interval_tree.find_shape(point), 0)
         

@@ -60,7 +60,7 @@ class DistanceCalculator:
         dlat = lat2 - lat1
         dlon = lon2 - lon1
         a = sin(dlat/2)**2 + cos(lat1)*cos(lat2)*sin(dlon/2)**2
-        return round(R*2*atan2(sqrt(a), sqrt(1-a)), 3)
+        return round(R*2*atan2(sqrt(a), sqrt(1-a)), 4)
     
     @staticmethod
     def get_distance_basic(p1: geometry.Point, p2: geometry.Point) -> float:

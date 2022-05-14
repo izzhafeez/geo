@@ -1,14 +1,19 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import json
 
 from gsheets import models, Sheets
+from tqdm import tqdm
+# import contextily as ctx
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import requests
+import shapely.geometry
 
+from error.value_error.out_of_bounds_error import OutOfBoundsError
 from geom.elevation import ElevationMap
 from geom.geo_pt import GeoPt
 from geom.shape import Shape
@@ -22,24 +27,27 @@ class Location(GeoPt, ABC):
     
     Fields:
         name (str): the name of the location.
-        lat (float): the latitude coordinate of the location.
-        lon (float): the longitude coordinate of the location.
+        lat (Optional[float]): the latitude coordinate of the location.
+        lon (Optional[float]): the longitude coordinate of the location.
         shape (Optional[Shape]): the shape representing the location, if available.
         _nearest (Dict[str, Tuple[Location, float]]): the dictionary storing
             the nearest (malls, schools etc.) to that particular location.
     """
     name:     str
-    lat:      float
-    lon:      float
+    lat:      Optional[float]
+    lon:      Optional[float]
     shape:    Optional[Shape] = None
     _nearest: Dict[str, Tuple[Optional[GeoPt], float]]
 
-    def __init__(self, name: str, lat: float=None, lon: float=None, shape: Shape=None):
+    def __init__(self, name: str, lat: Optional[float]=None, lon: Optional[float]=None, shape: Optional[Shape]=None):
         self.name = name
         self.shape = shape
         lat, lon = self._get_coords(lat, lon)
         self._nearest = {}
-        super().__init__(lat=lat, lon=lon)
+        if lat and lon:
+            super().__init__(lat=lat, lon=lon)
+        else:
+            super().__init__(lat=float("inf"), lon=float("inf"))
 
     def __str__(self) -> str:
         type_ = str(type(self)).split(".")[-1].split("'")[0]
@@ -49,7 +57,7 @@ class Location(GeoPt, ABC):
         type_ = str(type(self)).split(".")[-1].split("'")[0]
         return f"<{type_}: {self.name}>"
     
-    def _get_coords(self, lat: Optional[float], lon: Optional[float]) -> Tuple[float, float]:
+    def _get_coords(self, lat: Optional[float], lon: Optional[float]) -> Tuple[Optional[float], Optional[float]]:
         """
         If latitude or longitude are not available, first check whether the shape is available.
         If shape is available, then compute the center of the shape.
@@ -60,17 +68,17 @@ class Location(GeoPt, ABC):
             lon (Optional[float]): longitude.
 
         Returns:
-            Tuple[float, float]: new lat long values.
+            Tuple[Optional[float], Optional[float]]: new lat long values.
         """
         if lat and lon and is_float(lat) and is_float(lon):
             return lat, lon
         if self.shape is not None:
-            return Bound.get_bound_from_shape(self.shape).center.as_geo_pt().coords_as_tuple_yx()
+            return GeoPt.from_bound(Bound.get_bound_from_shape(self.shape)).coords_as_tuple_latlong()
         try:
             return self._get_coords_from_api(self.name)
         except IndexError:
             print(self.name, "could not be found.")
-            return np.nan, np.nan
+            return None, None
 
     def _get_coords_from_api(self, name: str) -> Tuple[float, float]:
         """
@@ -108,22 +116,23 @@ class Location(GeoPt, ABC):
                 setattr(self, field, None)
     
     @cached_property
-    def elevation(self) -> float:
+    def elevation(self) -> Optional[float]:
         """
         Lazily gets elevation value of the location.
 
         Returns:
-            float: elevation at the location.
+            Optional[float]: elevation at the location.
         """
-        self._elevation = ElevationMap.get_elevation(lat=self.lat, lon=self.lon)
-        return self._elevation
+        if self.lat and self.lon:
+            return ElevationMap.get_elevation(lat=self.lat, lon=self.lon)
+        return None
 
-    def get_distance(self, point: GeoPt) -> float:
+    def get_distance(self, point: Location, base: bool=True) -> float:
         """
         Gets distance from the location to another point on Earth.
 
         Args:
-            point (GeoPt): the destination point to query.
+            point (Location): the destination point to query.
 
         Returns:
             float: distance in km.
@@ -131,6 +140,12 @@ class Location(GeoPt, ABC):
         if self.shape is not None:
             if self.shape.contains(point):
                 return 0
+            if base:
+                if point.shape and self.shape.exterior and point.shape.exterior:
+                    distance = (self.shape.exterior.distance(point) * 111.33
+                                + point.shape.exterior.distance(self) * 111.33
+                                - super().get_distance(point))
+                    return max(round(distance, 4), 0)
             return self.shape.get_nearest(point)[1]
         return super().get_distance(point)
 
@@ -176,7 +191,9 @@ class Location(GeoPt, ABC):
         """
         return self.nearest(name)[0]
 
-    def map_nearest(self, name: str, locations: Locations) -> Tuple[Optional[GeoPt], float]:
+    def map_nearest(self,
+                    locations: Locations,
+                    name: str="") -> Tuple[Optional[GeoPt], float]:
         """
         From a set of locations, get the nearest one to this location.
 
@@ -187,9 +204,12 @@ class Location(GeoPt, ABC):
         Returns:
             Tuple[GeoPt, float]: pair of point and distance to point.
         """
+        name = name if name != "" else locations.name
         nearest_point, nearest_distance = locations.get_nearest_to(self)
         self._nearest[name] = (nearest_point, nearest_distance) if nearest_point else (None, float("inf"))
-        setattr(self, "nearest_"+name, self._nearest[name])
+        setattr(self, name, self._nearest[name])
+        setattr(self, "nearest_"+name, self._nearest[name][0])
+        setattr(self, "distance_to_"+name, self._nearest[name][1])
         return self._nearest[name]
 
 class Locations(ABC):
@@ -199,15 +219,15 @@ class Locations(ABC):
     Enables filtering, sorting regex searching of locations.
 
     Fields:
-        locations_kdtree (KDTree[Dict]): KDTree representing the locations.
+        kdtree (KDTree[Dict]): KDTree representing the locations.
             This reduces the expected time complexity of searching nearest points to O(logN).
         locations (Dict[str, Location]): dictionary storing the locations of the group,
             indexed by name to make it easier to access them.
         name (str): the name assigned to this group of locations.
     """
-    locations_kdtree: KDTree[GeoPt]
-    locations:        Dict[str, Location]
-    name:             str
+    kdtree:    KDTree[GeoPt]
+    locations: Dict[str, Location]
+    name:      str
 
     _SHEET_ID = "1M9Ujc54yZZPlxOX3yxWuqcuJOxzIrDYz4TAFx8ifB8c"
 
@@ -219,11 +239,16 @@ class Locations(ABC):
             name (str): name to assign to the group of locations.
         """
         self.name = name
-        self.locations_kdtree = KDTree[GeoPt]()
+        self.kdtree = KDTree[GeoPt]()
         self.locations = {}
+        self.kdtree.add_all(*locations)
         for location in locations:
-            self.locations_kdtree.add(location)
-            self.locations[location.name] = location
+            if location.lat == float("inf"):
+                continue
+            if location.name not in self.locations:
+                self.locations[location.name] = location
+            else:
+                self.locations[location.name+" "+type(location).__name__] = location
 
     def __getitem__(self, search_term="") -> Optional[Location]:
         """
@@ -252,6 +277,9 @@ class Locations(ABC):
               f"({', '.join(list(search_results.keys()))}). "
               "Returning first result.")
         return list(search_results.values())[0]
+
+    def __iter__(self) -> LocationIterator:
+        return LocationIterator(self.locations)
 
     @staticmethod
     @abstractmethod
@@ -314,6 +342,10 @@ class Locations(ABC):
         """
         pass
     
+    @cached_property
+    def count(self):
+        return len(self.locations.keys())
+    
     def filter(self,
                location_filter: Callable[[Location], bool]=lambda location: True,
                name: str="") -> Locations:
@@ -360,7 +392,7 @@ class Locations(ABC):
         Returns:
             Tuple[GeoPt, float]: point-distance pair.
         """
-        nearest_point, distance = self.locations_kdtree.nearest(point)
+        nearest_point, distance = self.kdtree.nearest(point)
         return (nearest_point, distance) if nearest_point else (None, float("inf"))
     
     @staticmethod
@@ -377,22 +409,48 @@ class Locations(ABC):
         sheets: Union[models.SpreadSheet, List[object]] = Sheets.from_files('client_secrets.json','~/storage.json')[Locations._SHEET_ID]
         return sheets.find(name).to_frame() if isinstance(sheets, models.SpreadSheet) else pd.DataFrame()
 
-    def map_nearest_to(self, locations: Locations) -> List[Tuple[str, Tuple[Location, float]]]:
+    def group_by(self,
+                 comparator: Callable[[Location], str]=lambda location: location.name) -> Dict[str, Locations]:
+        locations_dict: Dict[str, List[Location]] = {}
+        for _, location in self.locations.items():
+            to_compare = comparator(location)
+            if to_compare not in locations_dict:
+                locations_dict[to_compare] = []
+            locations_dict[to_compare].append(location)
+        
+        return {k: type(self)(*v, name=k) for k, v in locations_dict.items()}
+            
+    def map_nearest_to(self,
+                       locations: Locations,
+                       locations_name: str="",
+                       progress_bar: bool=False,
+                       dist: bool=True) -> List[Tuple[str, Tuple[Location, float]]]:
         """
         For each location in this set, apply the nearest method to each one of an external location.
         For example, malls.map_nearest_to(schools) will map each mall to its nearest school.
 
         Args:
             locations (Locations): group of destination locations to map to.
+            locations_name (str): what to name the group of locations.
+            prefix (str): what to put in front of the name.
 
         Returns:
             List[Tuple[str, Tuple[Location, float]]]: the result of the mapping.
         """
         to_return = []
-        for name, location in self.locations.items():
-            location.map_nearest(locations.name, locations)
-            to_return.append((name, location.nearest(locations.name)))
+        iterable = tqdm(self.locations.items()) if progress_bar else self.locations.items()
+        for name, location in iterable:
+            locations_name = locations.name if locations.name != "" else locations.name
+            location.map_nearest(locations, locations_name)
+            to_return.append((name, location.nearest(locations_name)))
         return to_return
+
+    # def plot(self, zoom: int=13, figsize=(20, 20), alpha=0.4, color="red") -> None:
+    #     if not 12 <= zoom <= 19:
+    #         raise OutOfBoundsError(zoom, 12, 19)
+    #     gdf = gpd.GeoDataFrame([location.shape if hasattr(location, "shape") else location for location in self.locations.values()], columns=["geometry"])
+    #     ax = gdf.geometry.plot(figsize=figsize, alpha=alpha, color=color)
+    #     ctx.add_basemap(ax, zoom=zoom, crs="EPSG:4326", source=ctx.providers.OneMapSG.Night)
 
     def show(self, attr: str="name") -> Dict[str, Any]:
         """
@@ -421,20 +479,63 @@ class Locations(ABC):
         return {name: getter(value) for name, value in self.locations.items()}
 
     def sort(self,
-             comparator: Callable[[Location], Any]=lambda location: location.name,
+             attr: str="name",
+             show: str=None,
              reverse=False) -> Dict[str, Location]:
         """
         Sorts the locations based on a particular attribute, or custom function.
         For example, lambda location: location.lat will sort them by latitude.
 
         Args:
-            comparator (Callable[[Location], Any], optional): the lambda function used to compare elements.
-                Defaults to lambda location:location.name.
+            attr: the attribute to sort by. Defaults to name.
+            show: the attribute to show in the end result. Defaults to be the same as attr.
             reverse (bool, optional): whether to reverse the values. Defaults to False.
 
         Returns:
             Dict[str, Location]: name-value pair with the values being defined in the custom show function.
         """
-        return {k: comparator(v) for k, v in sorted(self.locations.items(),
-                                                    key=lambda item: comparator(item[1]),
-                                                    reverse=reverse)}
+        if not show:
+            show = attr
+        return {k: getattr(v, show) for k, v in sorted(self.locations.items(),
+                                                       key=lambda pair: getattr(pair[1], attr),
+                                                       reverse=reverse)}
+    
+    def sort_by_lambda(self,
+                       comparator: Callable[[Location], Any]=lambda location: location.name,
+                       show: Callable[[Location], Any]=None,
+                       reverse=False) -> Dict[str, Location]:
+        """
+        Sorts the locations based on a particular attribute, or custom function.
+        For example, lambda location: location.lat will sort them by latitude.
+
+        Args:
+            comparator (Callable[[Location], Any], optional): the lambda function used to compare elements.
+                Defaults to lambda location: location.name.
+            show (Callable[[Location], Any], optional): the lambda function used to show information contained
+                within the location. Defaults to be the same as the comparator.
+            reverse (bool, optional): whether to reverse the values. Defaults to False.
+
+        Returns:
+            Dict[str, Location]: name-value pair with the values being defined in the custom show function.
+        """
+        if not show:
+            show = comparator
+        return {k: show(v) for k, v in sorted(self.locations.items(),
+                                              key=lambda item: comparator(item[1]),
+                                              reverse=reverse)}
+
+class LocationIterator:
+    """
+    Iterator object for the locations in Locations.
+    """
+    def __init__(self, locations: Dict[str, Location]):
+        self._locations = list(locations.items())
+        self._index = 0
+        self._len = len(locations)
+    
+    def __next__(self) -> Location:
+        if self._index < self._len:
+            to_return = self._locations[self._index][1]
+            self._index += 1
+            return to_return
+        raise StopIteration
