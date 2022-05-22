@@ -1,6 +1,5 @@
 from __future__ import annotations
 from typing import Any, Callable, Dict, Generic, List, Optional, Set, Tuple, TypeVar
-import random
 
 from .comparable import Comparable
 
@@ -64,10 +63,8 @@ class AVLTree(Generic[U, T]):
         key = self.comparator(value)
         if key not in self.keys:
             self.keys[key] = [value]
-        elif value not in self.keys[key]:
-            self.keys[key].append(value)
         else:
-            return
+            self.keys[key].append(value)
         def insert_helper(node: Optional[Node[T]], key: T) -> Optional[Node[T]]:
             if not node:
                 return Node[T](key)
@@ -106,11 +103,21 @@ class AVLTree(Generic[U, T]):
         Args:
             value (U): value to be deleted.
         """
-        key = self.comparator(value)
-        if key in self.keys and value in self.keys[key]:
-            self.keys[key].remove(value)
-        else:
-            return
+        def drop_child(node: Optional[Node[T]], key: T) -> bool:
+            if not node:
+                return False
+            elif key == node.key:
+                return True
+            elif key < node.key:
+                if drop_child(node.left, key):
+                    node.left = None
+                return False
+            elif key > node.key:
+                if drop_child(node.right, key):
+                    node.right = None
+                return False
+            return False
+            
         def delete_helper(node: Optional[Node[T]], key: T) -> Optional[Node[T]]:
             if not node:
                 return None
@@ -150,8 +157,12 @@ class AVLTree(Generic[U, T]):
                 node.right = self.right_rotate(node.right)
                 return self.left_rotate(node)
             return node
-        if key:
+        key = self.comparator(value)
+        if key in self.keys and value in self.keys[key]:
+            self.keys[key].remove(value)
             self.root = delete_helper(self.root, key)
+        else:
+            return
  
     def left_rotate(self, node: Optional[Node[T]]) -> Optional[Node[T]]:
         """
@@ -236,7 +247,7 @@ class AVLTree(Generic[U, T]):
             if not node:
                 return None
             elif not node.left:
-                return random.sample(self.keys[node.key], 1)[0]
+                return self.keys[node.key][-1]
             return get_min_value_helper(node.left)
         return get_min_value_helper(self.root)
     
