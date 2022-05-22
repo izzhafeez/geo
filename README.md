@@ -10,7 +10,7 @@ This Python package details some of the ways I have managed this data, and appli
 
 ## Geometry
 
-The "geom" submodule contains classes representing different aspects of a location in Singapore, including points, lines and shapes. It also includes a dynamic distance calculator as well as one for elevation.
+The "geom" submodule contains classes representing different aspects of a location in Singapore, including points, lines and shapes. It also includes a dynamic distance calculator as well as one for ```elevation```.
 
 ## Structures
 
