@@ -91,7 +91,7 @@ class AVLTree(Generic[T]):
         Otherwise, just decrement its count and update weights along the way.
 
         Args:
-            key (T): key to be added.
+            key (T): key to be deleted.
         """
         def delete_helper(node: Optional[Node[T]], key: T) -> Optional[Node[T]]:
             if not node:
@@ -132,7 +132,7 @@ class AVLTree(Generic[T]):
                 node.right = self.right_rotate(node.right)
                 return self.left_rotate(node)
             return node
-        if key:
+        if key is not None:
             self.root = delete_helper(self.root, key)
  
     def left_rotate(self, node: Optional[Node[T]]) -> Optional[Node[T]]:
