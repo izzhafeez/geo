@@ -4,9 +4,9 @@ from functools import cached_property
 from typing import Dict, Optional, Set, Tuple
 import re
 
-from .mrt_line import MRTLine, MRTLines
+from .mrt_line import MRTLine, get_mrt_lines
 
-class StationCode:
+class PlatformCode:
     code: str
     
     _lower_terminuses: Set[str] = {"EW1", "CG0",
@@ -43,23 +43,25 @@ class StationCode:
                                      "JS": "JR",
                                      "CG": "EW",}
     
+    MRT_LINES = get_mrt_lines()
+    
     def __init__(self, code: str):
         self.code = code
     
-    def __eq__(self, other: StationCode) -> bool:
+    def __eq__(self, other: PlatformCode) -> bool:
         return self.code == other.code
     
-    def __lt__(self, other: StationCode) -> bool:
+    def __lt__(self, other: PlatformCode) -> bool:
         return self.number < other.number
     
     def __hash__(self) -> int:
         return hash(self.code)
     
     def __str__(self) -> str:
-        return f"<StationCode: {self.code}>"
+        return f"<PlatformCode: {self.code}>"
 
     def __repr__(self) -> str:
-        return f"<StationCode: {self.code}>"
+        return f"<PlatformCode: {self.code}>"
     
     @cached_property
     def prefix(self) -> str:
@@ -81,36 +83,36 @@ class StationCode:
     
     @cached_property
     def is_lower_terminus(self) -> bool:
-        return self.code in StationCode._lower_terminuses
+        return self.code in PlatformCode._lower_terminuses
     
     @cached_property
     def is_higher_terminus(self) -> bool:
-        return self.code in StationCode._upper_terminuses
+        return self.code in PlatformCode._upper_terminuses
     
     @cached_property
-    def next_code(self) -> Optional[StationCode]:
+    def next_code(self) -> Optional[PlatformCode]:
         if self.is_higher_terminus:
             return None
-        if self.code in StationCode._exceptions:
-            return StationCode(StationCode._exceptions[self.code][1])
-        return StationCode(self.prefix + str(self.number + 1))
+        if self.code in PlatformCode._exceptions:
+            return PlatformCode(PlatformCode._exceptions[self.code][1])
+        return PlatformCode(self.prefix + str(self.number + 1))
     
     @cached_property
-    def prev_code(self) -> Optional[StationCode]:
+    def prev_code(self) -> Optional[PlatformCode]:
         if self.is_lower_terminus:
             return None
-        if self.code in StationCode._exceptions:
-            return StationCode(StationCode._exceptions[self.code][0])
-        return StationCode(self.prefix + str(self.number - 1))
+        if self.code in PlatformCode._exceptions:
+            return PlatformCode(PlatformCode._exceptions[self.code][0])
+        return PlatformCode(self.prefix + str(self.number - 1))
         
     @cached_property
     def line(self) -> MRTLine:
-        if self.prefix in StationCode._line_mapping:
-            new_prefix = StationCode._line_mapping[self.prefix]
-            line = MRTLines.get(new_prefix)
+        if self.prefix in PlatformCode._line_mapping:
+            new_prefix = PlatformCode._line_mapping[self.prefix]
+            line = PlatformCode.MRT_LINES[new_prefix]
             if line is not None:
                 return line
-        line = MRTLines.get(self.prefix)
+        line = PlatformCode.MRT_LINES[self.prefix]
         if line is not None:
             return line
         raise ValueError(self.prefix)

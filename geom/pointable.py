@@ -17,4 +17,8 @@ class Pointable(ABC):
     @abstractmethod
     def move_to(self, new_x: float, new_y: float) -> Pointable:
         pass
+    
+    @abstractmethod
+    def get_distance(self, Pointable) -> float:
+        pass
         

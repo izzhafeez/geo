@@ -9,7 +9,7 @@ from structures.kdtree import KDTree
 from .connection import Connection
 from .exit import Exits
 from .platform import Platform
-from .station_code import StationCode
+from .platform_code import PlatformCode
 from ..location import Location, Locations
 
 class Station(Location):
@@ -81,11 +81,15 @@ class Stations(Locations):
         
         for platform_info in data_dict:
             name = platform_info["Name"]
-            platform_code = StationCode(platform_info["Label"])
+            platform_code = PlatformCode(platform_info["Label"])
             platform_info = Stations._field_map(platform_info)
-            opening_year = platform_info.get("opening_year")
-            closing_year = platform_info.get("closing_year")
-            platform = Platform(platform_code, opening_year, closing_year)
+            platform_info["platform_code"] = platform_code
+            # lat = platform_info.get("lat")
+            # lon = platform_info.get("lon")
+            # opening_year = platform_info.get("opening_year")
+            # closing_year = platform_info.get("closing_year")
+            # platform = Platform(platform_code, opening_year, closing_year)
+            platform = Platform(platform_code.code, **platform_info)
             if name not in station_platforms:
                 station_platforms[name] = [platform]
                 station_infos[name] = platform_info

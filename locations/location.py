@@ -280,6 +280,27 @@ class Locations(ABC):
 
     def __iter__(self) -> LocationIterator:
         return LocationIterator(self.locations)
+    
+    def insert(self,
+                to_insert: List[Location],
+                name: str="") -> Locations:
+        """
+        Adds locations to the existing set of locations.
+        Returns another Locations object containing these new locations.
+        Inserts can be chained together like in locations.insert(i1).insert(i2)
+        For example, [L1, L2].
+
+        Args:
+            to_insert (List[Location]): list of locations to add to the existing set.
+            name (str, optional): optional name to be given to this subset of locations. Defaults to "".
+
+        Returns:
+            Locations: superset of the original locations.
+        """
+        name_to_use = self.name if name == "" else name
+        appended_locations = list(self.locations.values()) + to_insert
+        locations = type(self)(*appended_locations, name=name_to_use)
+        return locations
 
     @staticmethod
     @abstractmethod

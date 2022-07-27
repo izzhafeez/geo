@@ -94,7 +94,7 @@ class GeoPt(shapely.geometry.Point, Pointable):
         Returns:
             float: distance, in metres, to the target point.
         """
-        if isinstance(point, GeoPt):
+        if hasattr(point, "lat"):
             return DistanceCalculator.get_distance(self, point)
         raise TypeError("Must be a GeoPt!")
         
