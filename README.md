@@ -8,7 +8,7 @@ After concluding my service, I began exploring different aspects of Singapore's 
 
 This Python package details some of the ways I have managed this data, and applied programming principles learned from my Computer Science modules. THrough this project, I hope to display strong concepts in Object Oriented Progamming, Generics, Immutability and Tree Data Structures.
 
-[Link to website post about the project](https://www.izzhafeez.com/#/works/projects/geospatial-management)
+[Link to website post about the project](https://www.izzhafeez.com/works/projects/geospatial-management)
 
 ## Geometry
 
