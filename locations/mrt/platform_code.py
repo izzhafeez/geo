@@ -31,16 +31,8 @@ class PlatformCode:
                                                "TE22": ("TE21", "TE22A"),
                                                "TE23": ("TE22A", "TE24"),
                                                "TE22A": ("TE22", "TE23"),}
-    _line_mapping: Dict[str, str] = {"BP": "LRT",
-                                     "SE": "LRT",
-                                     "SW": "LRT",
-                                     "PE": "LRT",
-                                     "PW": "LRT",
-                                     "CP": "CR",
+    _line_mapping: Dict[str, str] = {"CP": "CR",
                                      "CE": "CC",
-                                     "JW": "JR",
-                                     "JE": "JR",
-                                     "JS": "JR",
                                      "CG": "EW",}
     
     MRT_LINES = get_mrt_lines()
