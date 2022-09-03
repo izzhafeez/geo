@@ -23,3 +23,18 @@ class Color:
         g = int(hex[2:4], 16)
         b = int(hex[4:6], 16)
         return Color(r, g, b)
+    
+    def to_hex(self) -> str:
+        r_hex = hex(int(self.r))[2:]
+        if len(r_hex) == 1:
+            r_hex = "0" + r_hex
+            
+        g_hex = hex(int(self.g))[2:]
+        if len(g_hex) == 1:
+            g_hex = "0" + g_hex
+            
+        b_hex = hex(int(self.b))[2:]
+        if len(b_hex) == 1:
+            b_hex = "0" + b_hex
+            
+        return r_hex + g_hex + b_hex
