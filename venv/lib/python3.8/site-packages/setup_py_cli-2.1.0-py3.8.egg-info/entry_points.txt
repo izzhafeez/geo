@@ -1,0 +1,4 @@
+
+    [console_scripts]
+    setup-py = setup_py.cli:cli
+    
