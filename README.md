@@ -1,5 +1,7 @@
 # Geo
 
+[![Upload Python Package](https://github.com/mynameizzhafeez/geo/actions/workflows/python-publish.yml/badge.svg?event=push)](https://github.com/mynameizzhafeez/geo/actions/workflows/python-publish.yml)
+
 Geo is a geospatial management tool for Python. It facilitates the creation of Location objects, and acts as a model for Singapore's urban environment.
 
 During my National Service, I was involved in the DRO project, a piece of software used to optimise the placement of ambulances in Singapore. In addition, I further worked with medical, fire alarm and MyResponder data. This started my journey into Geospatial Analytics.
