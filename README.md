@@ -8,7 +8,7 @@ During my National Service, I was involved in the DRO project, a piece of softwa
 
 After concluding my service, I began exploring different aspects of Singapore's urban geography; I used BeautifulSoup and Selenium to extract data pertaining to Malls, Schools, Services, Transportation, Shops and the like. I further extracted and processed datasets from LTA, URA and GovTech, which I explored using tools such as Tableau and QGis. This eventually led me to creating my MALLS Card Game, utilising as much of the data collected as possible to produce a strategic card game.
 
-This Python package details some of the ways I have managed this data, and applied programming principles learned from my Computer Science modules. THrough this project, I hope to display strong concepts in Object Oriented Progamming, Generics, Immutability and Tree Data Structures.
+This Python package details some of the ways I have managed this data, and applied programming principles learned from my Computer Science modules. Through this project, I hope to display strong concepts in Object Oriented Progamming, Generics, Immutability and Tree Data Structures.
 
 [Link to website post about the project](https://www.izzhafeez.com/#/works/projects/geospatial-management)
 
