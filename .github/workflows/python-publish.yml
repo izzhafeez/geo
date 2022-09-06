@@ -6,6 +6,9 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
+# python setup.py bdist
+# twine upload dist/*
+
 name: Upload Python Package
 
 on:
