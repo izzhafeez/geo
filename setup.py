@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 
 setup(
-  name='halfgeo',
-  version='1.0.5',
+  name='half_geo',
+  version='1.1.0',
   license='MIT',
   author="Izz Hafeez",
   author_email='izzhafeez@gmail.com',
