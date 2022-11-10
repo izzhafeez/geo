@@ -1,5 +1,0 @@
-pandas
-geopandas
-numpy
-shapely
-gsheets
