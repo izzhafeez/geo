@@ -1,0 +1,3 @@
+include src/geo/geom/assets/singapore-elevation.png
+include src/geo/locations/assets/*
+include src/geo/locations/mrt/assets/*
